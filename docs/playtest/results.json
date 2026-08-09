@@ -1,0 +1,45 @@
+{
+  "passed": true,
+  "testedAt": "2026-08-09T04:45:09.268Z",
+  "baseURL": "http://127.0.0.1:4174",
+  "failures": [],
+  "observations": [
+    {
+      "desktop": {
+        "title": "THOTSL4YER69 — Just The Tip",
+        "canvas": {
+          "width": 1280,
+          "height": 720,
+          "box": {
+            "x": 0,
+            "y": 67.5,
+            "width": 1440,
+            "height": 810,
+            "top": 67.5,
+            "right": 1440,
+            "bottom": 877.5,
+            "left": 0
+          }
+        },
+        "hudVisible": true,
+        "bossElementPresent": true,
+        "bodyOverflowX": false
+      },
+      "pauseVisible": true,
+      "frameSample": {
+        "frames": 32,
+        "elapsed": 1524.8999999994412,
+        "fps": 20.984982621818958
+      }
+    },
+    {
+      "mobile": {
+        "touchButtons": 9,
+        "touchVisible": true,
+        "hudVisible": true,
+        "canvasVisible": true,
+        "bodyOverflowX": false
+      }
+    }
+  ]
+}

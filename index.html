@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/><meta name="theme-color" content="#ff269c"/><link rel="manifest" href="/manifest.webmanifest"/><link rel="icon" href="/icons/icon-192.png"/><link rel="apple-touch-icon" href="/icons/icon-192.png"/><title>THOTSL4YER69 — Just The Tip</title></head>
+<body>
+  <main id="shell">
+    <div id="game"></div>
+    <header id="hud" class="gone">
+      <section class="meter-cluster"><span class="label">MEAT</span><div class="meter hp"><i id="hp-bar"></i></div><strong id="hp-text">100</strong></section>
+      <section class="stage-title"><small id="act">ACT I</small><b id="venue">THE PINK PIGEON</b><em id="wave">WAVE 1/3</em></section>
+      <section class="numbers"><span class="high-stat">HIGH <b id="high">0</b><span class="high-track"><i id="high-bar"></i></span></span><span>BAGS <b id="packets">1</b></span><span>$ <b id="cash">0</b></span><span>GRIP <b id="weapon">FISTS</b></span><span>SCORE <b id="score">0</b></span></section>
+      <div id="boss-wrap" class="gone"><span id="boss-name">BOSS</span><div class="meter boss"><i id="boss-bar"></i></div></div>
+    </header>
+    <div id="combo" class="gone">2× <small>FILTHY</small></div>
+    <div id="toast"></div>
+    <aside id="boss-card" class="gone"><img id="boss-portrait" alt=""><div><small>FRESH PROBLEM</small><b id="boss-card-name"></b><em id="boss-card-line"></em></div></aside>
+    <aside id="achievement" class="gone"><small>DEGENERACY UNLOCKED</small><b id="achievement-name"></b></aside>
+    <section id="overlay" class="overlay">
+      <img class="title-character title-jack" src="/assets/characters/jack-row0/01.png" alt="">
+      <img class="title-character title-roxi" src="/assets/characters/woman-row0/01.png" alt="">
+      <div class="age">18+ PERSONAL PARODY • BAD TASTE GUARANTEED</div>
+      <h1>THOTSL4YER<span>69</span></h1><h2>JUST THE TIP</h2>
+      <p class="lede">FOUR VENUES. ONE COOKED NIGHT. ABSOLUTELY NO PERSONAL GROWTH.</p>
+      <div id="difficulty"><span>BAD-DECISION LEVEL</span><button class="diff" data-diff="messy">MESSY</button><button class="diff active" data-diff="cooked">COOKED</button><button class="diff" data-diff="unhinged">UNHINGED</button></div>
+      <div class="menu-actions"><button id="start">START MAKING MISTAKES</button><button id="cast" class="secondary">MEET THE PROBLEMS</button></div>
+      <p class="keys"><b>MOVE</b> A/D　<b>JUMP</b> W/SPACE　<b>SMACK</b> J　<b>HEAVY</b> H　<b>DASH</b> SHIFT　<b>PACKET</b> K　<b>PIGEON</b> L　<b>MAKE IT RAIN</b> T　<b>PAUSE</b> ESC</p>
+      <p id="best"></p>
+    </section>
+    <section id="modal" class="overlay gone"></section>
+    <nav id="touch" class="gone"><div><button data-action="left">◀</button><button data-action="right">▶</button><button data-action="jump">↑</button></div><div><button data-action="dash">DASH</button><button data-action="hit">SMACK</button><button data-action="heavy">HARD</button><button data-action="rain">$$$</button><button data-action="packet">BAG</button><button data-action="pigeon">BIRD</button></div></nav>
+    <button id="mute" aria-label="Toggle audio">♪</button>
+  </main>
+  <script type="module" src="/src/main.ts"></script>
+</body></html>
