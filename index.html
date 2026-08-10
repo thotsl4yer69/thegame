@@ -10,22 +10,24 @@
       <div id="boss-wrap" class="gone"><span id="boss-name">BOSS</span><div class="meter boss"><i id="boss-bar"></i></div></div>
     </header>
     <div id="combo" class="gone">2× <small>FILTHY</small></div>
-    <div id="toast"></div>
+    <div id="toast" role="status" aria-live="polite"></div>
     <aside id="boss-card" class="gone"><img id="boss-portrait" alt=""><div><small>FRESH PROBLEM</small><b id="boss-card-name"></b><em id="boss-card-line"></em></div></aside>
-    <aside id="achievement" class="gone"><small>DEGENERACY UNLOCKED</small><b id="achievement-name"></b></aside>
+    <aside id="achievement" class="gone" role="status" aria-live="polite"><small>DEGENERACY UNLOCKED</small><b id="achievement-name"></b></aside>
     <section id="overlay" class="overlay">
       <img class="title-character title-jack" src="/assets/characters/jack-row0/01.png" alt="">
       <img class="title-character title-roxi" src="/assets/characters/woman-row0/01.png" alt="">
-      <div class="age">18+ PERSONAL PARODY • BAD TASTE GUARANTEED</div>
+      <div class="age">18+ PERSONAL PARODY • BAD TASTE GUARANTEED • BUILD 1.1</div>
       <h1>THOTSL4YER<span>69</span></h1><h2>JUST THE TIP</h2>
       <p class="lede">FOUR VENUES. ONE COOKED NIGHT. ABSOLUTELY NO PERSONAL GROWTH.</p>
-      <div id="difficulty"><span>BAD-DECISION LEVEL</span><button class="diff" data-diff="messy">MESSY</button><button class="diff active" data-diff="cooked">COOKED</button><button class="diff" data-diff="unhinged">UNHINGED</button></div>
-      <div class="menu-actions"><button id="start">START MAKING MISTAKES</button><button id="cast" class="secondary">MEET THE PROBLEMS</button></div>
+      <div id="difficulty"><span>BAD-DECISION LEVEL</span><button class="diff" data-diff="messy">MESSY</button><button class="diff active" data-diff="cooked">COOKED</button><button class="diff" data-diff="unhinged">UNHINGED</button><button class="diff feral" data-diff="feral">FERAL</button></div>
+      <p id="difficulty-copy" aria-live="polite">THE INTENDED BAD DECISION. NORMAL DAMAGE, NORMAL HAZARDS, NORMAL REGRET.</p>
+      <div class="menu-actions"><button id="start">START MAKING MISTAKES</button><button id="how" class="secondary">HOW TO SURVIVE</button><button id="cast" class="secondary">MEET THE PROBLEMS</button></div>
       <p class="keys"><b>MOVE</b> A/D　<b>JUMP</b> W/SPACE　<b>SMACK</b> J　<b>HEAVY</b> H　<b>DASH</b> SHIFT　<b>PACKET</b> K　<b>PIGEON</b> L　<b>MAKE IT RAIN</b> T　<b>PAUSE</b> ESC</p>
       <p id="best"></p>
+      <p id="rap-sheet"></p>
     </section>
     <section id="modal" class="overlay gone"></section>
-    <nav id="touch" class="gone"><div><button data-action="left">◀</button><button data-action="right">▶</button><button data-action="jump">↑</button></div><div><button data-action="dash">DASH</button><button data-action="hit">SMACK</button><button data-action="heavy">HARD</button><button data-action="rain">$$$</button><button data-action="packet">BAG</button><button data-action="pigeon">BIRD</button></div></nav>
+    <nav id="touch" class="gone" aria-label="Touch controls"><div><button data-action="left" aria-label="Move left">◀</button><button data-action="right" aria-label="Move right">▶</button><button data-action="jump" aria-label="Jump">↑</button></div><div><button data-action="dash">DASH</button><button data-action="hit">SMACK</button><button data-action="heavy">HARD</button><button data-action="rain">$$$</button><button data-action="packet">BAG</button><button data-action="pigeon">BIRD</button></div></nav>
     <button id="mute" aria-label="Toggle audio">♪</button>
   </main>
   <script type="module" src="/src/main.ts"></script>
