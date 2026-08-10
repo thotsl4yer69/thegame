@@ -54,11 +54,14 @@ Each act has two escalating crowd waves, a boss, a unique authored environment a
 - Hammer and bottle weapons; packets, energy, kebab and cash pickups
 - Four unique venue hazards: bottle-service rain, live puddles, casino debt projectiles and hot grease
 - Signature boss mechanics: Chad reinforcements, Goblin theft/teleport, Candy wallet-heal and Damo ground slam
-- Three saved difficulty profiles: Messy, Cooked and Unhinged
+- Four saved difficulty profiles: Messy, Cooked, Unhinged and **Feral**; Feral raises enemy meat 55%, damage 48%, accelerates hazards and pays 2.25× score
+- Persistent run “rap sheet”: attempts, dawn clears, total problems dropped, best run and fastest successful clear
+- Arcade night ratings on death and dawn clear
+- Stronger combat-state feedback for critical MEAT, combo heat, boss arrivals and full HIGH/MONEY SHOT readiness
 - Eight persistent degeneracy achievements and eight unlockable after-dark baddie dossiers
 - Procedural club beat and synthesized combat/pickup/audio feedback
 - Vulgar reactive dialogue, stage intros, boss callouts and complete dawn ending
-- Desktop keyboard and responsive mobile touch controls
+- Desktop keyboard and responsive mobile touch controls with light haptic feedback where supported
 - Pause, mute, death/retry, content gate and persistent local best score
 - Installable PWA shell, offline-after-first-load cache and locally bundled fonts
 
@@ -66,7 +69,7 @@ Each act has two escalating crowd waves, a boss, a unique authored environment a
 
 - Phaser 3 renders and animates the playfield.
 - TypeScript simulation owns campaign state, combat, AI, progression and saves.
-- DOM/CSS owns menus, cast gallery, HUD, upgrade selection and touch controls.
+- DOM/CSS owns menus, cast gallery, HUD, upgrade selection, persistent run stats and touch controls.
 - Vite produces the browser release.
 
 ## Content note
@@ -82,6 +85,6 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-The release gates cover strict TypeScript validation, the complete production-asset matrix, the production build, a desktop gameplay journey and responsive mobile touch controls. See [`docs/PLAYTEST_REPORT.md`](docs/PLAYTEST_REPORT.md) for captured browser evidence and the defects found during the ownership pass.
+The release gates cover strict TypeScript validation, the complete production-asset matrix, the production build, a desktop gameplay journey and responsive mobile touch controls. The browser journey now also verifies the Feral difficulty, difficulty persistence and the survival-help surface. See [`docs/PLAYTEST_REPORT.md`](docs/PLAYTEST_REPORT.md) for captured browser evidence and the defects found during the ownership pass.
 
 See `CREDITS.md` for asset and dependency provenance.
