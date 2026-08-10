@@ -1,6 +1,6 @@
 import { chromium, expect, test } from '@playwright/test';
 
-test('desktop player journey boots, fights, pauses and resumes', async ({ page }) => {
+test('desktop player journey covers difficulty, help, combat, pause and persistence', async ({ page }) => {
   const runtimeErrors: string[] = [];
   page.on('pageerror', error => runtimeErrors.push(error.message));
   page.on('console', message => {
@@ -11,12 +11,23 @@ test('desktop player journey boots, fights, pauses and resumes', async ({ page }
   await page.goto('/', { waitUntil: 'networkidle' });
   await expect(page).toHaveTitle(/THOTSL4YER69/);
   await expect(page.locator('#start')).toBeVisible();
+  await expect(page.locator('[data-diff]')).toHaveCount(4);
+  await expect(page.locator('#rap-sheet')).toContainText('RAP SHEET');
 
   await page.locator('#cast').click();
   await expect(page.locator('.after-dark .card')).toHaveCount(8);
   await page.locator('#back').click();
-  await page.locator('[data-diff="unhinged"]').click();
-  await expect(page.locator('[data-diff="unhinged"]')).toHaveClass(/active/);
+
+  await page.locator('#how').click();
+  await expect(page.locator('.how-grid article')).toHaveCount(4);
+  await expect(page.locator('#modal')).toContainText('MONEY SHOT');
+  await page.locator('#back').click();
+
+  await page.locator('[data-diff="feral"]').click();
+  await expect(page.locator('[data-diff="feral"]')).toHaveClass(/active/);
+  await expect(page.locator('#difficulty-copy')).toContainText('2.25× SCORE');
+  await page.reload({ waitUntil: 'networkidle' });
+  await expect(page.locator('[data-diff="feral"]')).toHaveClass(/active/);
   await page.locator('[data-diff="cooked"]').click();
 
   await page.locator('#start').click();
@@ -62,6 +73,7 @@ test('mobile landscape exposes responsive touch combat controls', async () => {
   });
 
   await page.goto('/', { waitUntil: 'networkidle' });
+  await expect(page.locator('[data-diff]')).toHaveCount(4);
   await page.locator('#start').click();
   await expect(page.locator('#touch')).not.toHaveClass(/gone/);
   await expect(page.locator('#touch button')).toHaveCount(9);
