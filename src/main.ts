@@ -202,11 +202,12 @@ game.events.on('upgrade',({choices,choose}:any)=>{
   modal.classList.remove('gone');
   modal.querySelectorAll<HTMLButtonElement>('[data-id]').forEach(button=>button.onclick=()=>{closeModal();choose(button.dataset.id)});
 });
-game.events.on('pause',({resume}:any)=>{
+game.events.on('pause',(payload?:{resume?:()=>void})=>{
+  if(!payload?.resume)return;
   audio.pause(true);
   modal.innerHTML=`<div class="age">COWARD'S INTERMISSION</div><h2>PAUSED</h2><p>Hydrate. Lie to yourself. Continue.</p><button id="resume">GET BACK IN THERE</button>`;
   modal.classList.remove('gone');
-  q('#resume').onclick=()=>{closeModal();resume()};
+  q('#resume').onclick=()=>{closeModal();payload.resume?.()};
 });
 game.events.on('resumed',()=>audio.pause(false));
 game.events.on('closeModal',closeModal);
