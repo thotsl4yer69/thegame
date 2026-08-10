@@ -24,7 +24,8 @@ export const STAGES:Stage[]=[
 export const DIFFICULTIES={
  messy:{id:'messy',name:'MESSY',hp:.82,damage:.78,score:.8,hazard:1.2},
  cooked:{id:'cooked',name:'COOKED',hp:1,damage:1,score:1,hazard:1},
- unhinged:{id:'unhinged',name:'UNHINGED',hp:1.3,damage:1.28,score:1.5,hazard:.72}
+ unhinged:{id:'unhinged',name:'UNHINGED',hp:1.3,damage:1.28,score:1.5,hazard:.72},
+ feral:{id:'feral',name:'FERAL',hp:1.55,damage:1.48,score:2.25,hazard:.58}
 } as const;
 export const UPGRADES=[
  {id:'double',name:'DOUBLE BAGGER',desc:'+1 punch damage. Max meat −10. Because moderation is cowardice.'},
