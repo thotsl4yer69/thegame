@@ -1,0 +1,188 @@
+#difficulty-copy {
+  max-width: 760px;
+  min-height: 24px;
+  margin: -10px 0 16px;
+  color: #d8c8d6;
+  font: 12px 'Black Ops One', Impact, sans-serif;
+  letter-spacing: 1.2px;
+}
+
+#difficulty .feral {
+  border-color: #ff5a33;
+}
+
+#difficulty .feral.active {
+  color: #0b0507;
+  background: #ff5a33;
+  box-shadow: 0 0 18px #ff5a3388;
+}
+
+#best,
+#rap-sheet {
+  margin: 8px 0 0;
+  color: #d8c8d6;
+  font-size: 13px;
+  letter-spacing: 1px;
+}
+
+#rap-sheet {
+  margin-top: 3px;
+  color: var(--cyan);
+}
+
+.how-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(210px, 330px));
+  gap: 12px;
+  width: min(720px, 94vw);
+  margin: 18px 0;
+  text-align: left;
+}
+
+.how-grid article {
+  min-height: 112px;
+  padding: 14px 16px;
+  background: #0c0710dc;
+  border: 1px solid #714261;
+  box-shadow: 4px 4px #000;
+}
+
+.how-grid b {
+  color: var(--gold);
+  font: 17px 'Black Ops One', Impact, sans-serif;
+}
+
+.how-grid p {
+  margin: 8px 0 0;
+  color: #f3eaf2;
+  font-size: 15px;
+  line-height: 1.25;
+}
+
+.night-rating {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 8px;
+  color: var(--cyan);
+  font: 16px 'Black Ops One', Impact, sans-serif;
+  letter-spacing: 2px;
+}
+
+.night-rating b {
+  color: var(--gold);
+  font-size: clamp(48px, 8vw, 92px);
+  line-height: .8;
+  text-shadow: 4px 4px var(--pink);
+  transform: rotate(5deg);
+}
+
+body.high-ready .high-stat {
+  color: var(--gold);
+  text-shadow: 0 0 10px var(--cyan), 2px 2px #000;
+  animation: high-ready-pulse .48s steps(2, end) infinite;
+}
+
+body.high-ready #high-bar {
+  box-shadow: 0 0 12px var(--gold);
+}
+
+body.meat-critical .meter.hp {
+  box-shadow: 0 0 18px #ff174f, 3px 3px #000;
+  animation: meat-critical-pulse .65s ease-in-out infinite;
+}
+
+body.meat-critical #hp-text,
+body.meat-critical .meter-cluster .label {
+  color: #ff607d;
+}
+
+body.combo-hot #combo {
+  animation: combo-hot .25s steps(2, end) infinite;
+}
+
+#shell::after {
+  content: '';
+  position: absolute;
+  z-index: 60;
+  inset: 0;
+  border: 0 solid transparent;
+  pointer-events: none;
+  opacity: 0;
+}
+
+#shell.hud-hit::after {
+  border-width: 20px;
+  border-color: #ff174faa;
+  box-shadow: inset 0 0 90px #de084788;
+  animation: damage-flash .21s ease-out;
+}
+
+#shell.high-popped::after {
+  border-width: 10px;
+  border-color: #19ead899;
+  box-shadow: inset 0 0 70px #ffd22955;
+  animation: high-flash .6s ease-out;
+}
+
+#shell.boss-impact #boss-card {
+  animation: boss-impact .42s cubic-bezier(.2,.8,.2,1);
+}
+
+@keyframes high-ready-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes meat-critical-pulse {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.7); }
+}
+
+@keyframes combo-hot {
+  0%, 100% { transform: rotate(4deg) scale(1); }
+  50% { transform: rotate(1deg) scale(1.07); }
+}
+
+@keyframes damage-flash {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes high-flash {
+  0% { opacity: 0; }
+  25% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes boss-impact {
+  0% { transform: translateX(-35px) skew(-8deg); opacity: 0; }
+  55% { transform: translateX(8px) skew(-3deg); opacity: 1; }
+  100% { transform: translateX(0) skew(-3deg); }
+}
+
+@media (max-width: 760px) {
+  #difficulty-copy { max-width: 350px; margin-top: -6px; font-size: 10px; }
+  #best, #rap-sheet { max-width: 360px; font-size: 10px; }
+  .how-grid { grid-template-columns: 1fr 1fr; gap: 7px; margin: 8px 0; }
+  .how-grid article { min-height: 90px; padding: 9px; }
+  .how-grid b { font-size: 12px; }
+  .how-grid p { font-size: 11px; }
+}
+
+@media (max-height: 500px) {
+  #difficulty-copy { margin-bottom: 8px; }
+  #best, #rap-sheet { font-size: 10px; line-height: 1.1; }
+  .how-grid { grid-template-columns: repeat(4, minmax(140px, 1fr)); width: min(900px, 96vw); }
+  .how-grid article { min-height: 78px; }
+  .how-grid p { font-size: 10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.high-ready .high-stat,
+  body.meat-critical .meter.hp,
+  body.combo-hot #combo,
+  #shell.hud-hit::after,
+  #shell.high-popped::after,
+  #shell.boss-impact #boss-card { animation: none !important; }
+}
