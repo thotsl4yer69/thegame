@@ -88,3 +88,16 @@ test('mobile landscape exposes responsive touch combat controls', async () => {
   await context.close();
   await mobileBrowser.close();
 });
+
+test('first loaded production build remains playable offline', async ({ page, context }) => {
+  await page.goto('/', { waitUntil: 'networkidle' });
+  await page.waitForFunction(async () => {
+    const cache = await caches.open('ts69-v3');
+    return (await cache.keys()).length > 10;
+  });
+
+  await context.setOffline(true);
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await expect(page).toHaveTitle(/THOTSL4YER69/);
+  await expect(page.locator('#start')).toBeVisible();
+});
