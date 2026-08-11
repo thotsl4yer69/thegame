@@ -31,6 +31,7 @@ const hud=q('#hud');
 const touch=q('#touch');
 const toast=q('#toast');
 const shell=q('#shell');
+const RELEASE_CACHE='ts69-v3';
 let toastTimer=0;
 let bossTimer=0;
 let achievementTimer=0;
@@ -235,7 +236,14 @@ game.events.on('ending',({score,cash,best,kills,damage,seconds,difficulty:runDif
   q('#title').onclick=()=>location.reload();
 });
 
-if('serviceWorker' in navigator&&import.meta.env.PROD)navigator.serviceWorker.register('/sw.js').catch(()=>{});
+async function cacheReleaseAssets(){
+  if(!scene.ready){window.setTimeout(()=>void cacheReleaseAssets(),100);return}
+  const urls=[location.href,...performance.getEntriesByType('resource').map(entry=>entry.name)]
+    .filter(url=>new URL(url).origin===location.origin);
+  const cache=await caches.open(RELEASE_CACHE);
+  await Promise.all([...new Set(urls)].map(async url=>{try{await cache.add(url)}catch{}}));
+}
+if('serviceWorker' in navigator&&import.meta.env.PROD)navigator.serviceWorker.register('/sw.js').then(()=>navigator.serviceWorker.ready).then(cacheReleaseAssets).catch(()=>{});
 document.querySelectorAll<HTMLButtonElement>('#touch [data-action]').forEach(button=>{
   const action=button.dataset.action!;
   button.addEventListener('pointerdown',event=>{
