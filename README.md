@@ -79,12 +79,13 @@ All characters are fictional adults aged 25+. The game contains adult themes, ov
 ## Release verification
 
 ```bash
+npm audit --audit-level=high
 npm run check
 npm run build
 npx playwright install chromium
 npm run test:e2e
 ```
 
-The release gates cover strict TypeScript validation, the complete production-asset matrix, the production build, a desktop gameplay journey and responsive mobile touch controls. The browser journey now also verifies the Feral difficulty, difficulty persistence and the survival-help surface. See [`docs/PLAYTEST_REPORT.md`](docs/PLAYTEST_REPORT.md) for captured browser evidence and the defects found during the ownership pass.
+The release gates cover high-severity dependency vulnerabilities across the full tree, strict TypeScript validation, the complete production-asset matrix, the production build, a desktop gameplay journey, responsive mobile touch controls and a cached offline reload. The browser journey also verifies the Feral difficulty, difficulty persistence and the survival-help surface. See [`docs/PLAYTEST_REPORT.md`](docs/PLAYTEST_REPORT.md) for captured browser evidence and the defects found during the ownership pass.
 
 See `CREDITS.md` for asset and dependency provenance.
