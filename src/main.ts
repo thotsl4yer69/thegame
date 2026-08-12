@@ -9,6 +9,7 @@ import {GameScene} from './game/GameScene';
 import {FilthyAudio} from './game/audio';
 import {UPGRADES} from './game/data';
 import {achievementCount,bestScore,formatTime,rankRun,readGallery,readStats,recordRun} from './game/progression';
+import {CutsceneDirector,CutsceneId} from './cinematics/CutsceneDirector';
 
 const q=<T extends HTMLElement>(selector:string)=>document.querySelector(selector) as T;
 const audio=new FilthyAudio();
@@ -32,7 +33,9 @@ const hud=q('#hud');
 const touch=q('#touch');
 const toast=q('#toast');
 const shell=q('#shell');
-const RELEASE_CACHE='ts69-v3';
+const cutsceneRoot=q('#cutscene');
+const cutscenes=new CutsceneDirector(cutsceneRoot);
+const RELEASE_CACHE='ts69-v4';
 let toastTimer=0;
 let bossTimer=0;
 let achievementTimer=0;
@@ -108,9 +111,17 @@ function showCast(){
   q('#back').onclick=closeModal;
 }
 
+function showCinema(){
+  modal.innerHTML=`<div class="age">AFTER-HOURS CINEMA • FICTIONAL ADULTS 21+</div><h2>3D STORY CUTS</h2><p>Replay the filthy connective tissue between venues.</p><div class="choices cinema-choices">${cutscenes.scenes.map(scene=>`<button class="choice" data-cut="${scene.id}"><b>${scene.title}</b><small>${scene.location}</small></button>`).join('')}</div><button id="back">BACK TO THE BAD IDEA</button>`;
+  modal.classList.remove('gone');
+  modal.querySelectorAll<HTMLButtonElement>('[data-cut]').forEach(button=>button.onclick=async()=>{closeModal();overlay.classList.add('gone');await cutscenes.play(Number(button.dataset.cut) as CutsceneId);overlay.classList.remove('gone');showCinema()});
+  q('#back').onclick=closeModal;
+}
+
 q('#start').onclick=beginRun;
 q('#how').onclick=showHowTo;
 q('#cast').onclick=showCast;
+q('#cinema').onclick=showCinema;
 q('#mute').onclick=()=>{q('#mute').textContent=audio.toggle()?'×':'♪'};
 
 game.events.on('toast',({text,duration}:{text:string;duration:number})=>{
@@ -168,7 +179,10 @@ game.events.on('hud',(s:any)=>{
     q<HTMLElement>('#boss-bar').style.width=`${Math.max(0,s.boss.hp/s.boss.max*100)}%`;
   }
 });
-game.events.on('upgrade',({choices,choose}:any)=>{
+game.events.on('upgrade',async({stage,choices,choose}:any)=>{
+  hud.classList.add('gone');touch.classList.add('gone');
+  await cutscenes.play(stage as CutsceneId);
+  hud.classList.remove('gone');touch.classList.remove('gone');
   modal.innerHTML=`<div class="age">ACT SURVIVED • CHOOSE YOUR NEXT DISORDER</div><h2>DEGENERATE UPGRADE</h2><div class="choices">${choices.map((u:(typeof UPGRADES)[number])=>`<button class="choice" data-id="${u.id}"><b>${u.name}</b><small>${u.desc}</small></button>`).join('')}</div>`;
   modal.classList.remove('gone');
   modal.querySelectorAll<HTMLButtonElement>('[data-id]').forEach(button=>button.onclick=()=>{closeModal();choose(button.dataset.id)});
@@ -193,10 +207,11 @@ game.events.on('gameover',({score,stage,kills,damage,difficulty:runDifficulty,re
   q('#retry').onclick=()=>{audio.pause(false);document.body.classList.add('game-active');closeModal();hud.classList.remove('gone');touch.classList.remove('gone');retry()};
   q('#title').onclick=()=>location.reload();
 });
-game.events.on('ending',({score,cash,best,kills,damage,seconds,difficulty:runDifficulty,retry}:any)=>{
+game.events.on('ending',async({score,cash,best,kills,damage,seconds,difficulty:runDifficulty,retry}:any)=>{
   audio.pause(true);
   hud.classList.add('gone');
   touch.classList.add('gone');
+  await cutscenes.play(3);
   const time=formatTime(seconds);
   const rank=rankRun(score,true);
   const stats=recordRun({score,kills,damage,cleared:true,seconds});
@@ -214,6 +229,8 @@ async function cacheReleaseAssets(){
   await Promise.all([...new Set(urls)].map(async url=>{try{await cache.add(url)}catch{}}));
 }
 if('serviceWorker' in navigator&&import.meta.env.PROD)navigator.serviceWorker.register('/sw.js').then(()=>navigator.serviceWorker.ready).then(cacheReleaseAssets).catch(()=>{});
+const idle=window.requestIdleCallback??((callback:IdleRequestCallback)=>window.setTimeout(()=>callback({didTimeout:false,timeRemaining:()=>0} as IdleDeadline),800));
+idle(()=>void cutscenes.preload().then(cacheReleaseAssets).catch(()=>{}));
 document.querySelectorAll<HTMLButtonElement>('#touch [data-action]').forEach(button=>{
   const action=button.dataset.action!;
   button.addEventListener('pointerdown',event=>{
@@ -223,4 +240,4 @@ document.querySelectorAll<HTMLButtonElement>('#touch [data-action]').forEach(but
   });
   for(const eventName of ['pointerup','pointercancel','pointerleave'])button.addEventListener(eventName,()=>game.events.emit('touch',action,false));
 });
-window.addEventListener('blur',()=>game.events.emit('autopause'));
+window.addEventListener('blur',()=>{if(modal.classList.contains('gone')&&cutsceneRoot.classList.contains('gone'))game.events.emit('autopause')});

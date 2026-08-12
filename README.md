@@ -2,6 +2,14 @@
 
 An adults-only, four-act browser brawler about one catastrophically cooked night. This is an original autobiographical parody: vulgar, violent, sexy, stupid and entirely fictional.
 
+## v1.2 — After-Hours Cinema
+
+- Four original Three.js story cutscenes bridge the venue progression and dawn ending.
+- Replay every cinematic from the title-screen **3D Story Cuts** cinema.
+- The Pink Pigeon cut includes an interactive stage-tip beat with animated cash rain.
+- All depicted characters are fictional adults aged 21+; mature scenes are consensual and non-explicit.
+- Pause now suspends the entire Phaser scene clock, touch input obeys stun/transition gates, and audio synthesis stops while suspended.
+
 ## Play
 
 ```bash

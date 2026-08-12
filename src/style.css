@@ -198,6 +198,35 @@ h2 { margin: 0; color: var(--gold); font: clamp(22px, 4vw, 50px) 'Black Ops One'
 .keys b { color: var(--cyan); }
 .gone { opacity: 0 !important; pointer-events: none !important; }
 
+.cutscene {
+  position: absolute;
+  z-index: 80;
+  inset: 0;
+  overflow: hidden;
+  background: #080309;
+  opacity: 1;
+  transition: opacity .35s;
+}
+#cutscene-stage,
+#cutscene-stage canvas { width: 100%; height: 100%; display: block; }
+.cutscene-grain { position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(0deg,transparent 0 3px,#fff 4px); opacity: .045; mix-blend-mode: screen; }
+.cutscene-grain::after { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 50% 45%,transparent 25%,#050106cc 92%); }
+.cutscene-header { position: absolute; top: max(16px,env(safe-area-inset-top)); right: 22px; left: 22px; display: flex; justify-content: space-between; color: var(--gold); font: 13px 'Black Ops One',Impact,sans-serif; letter-spacing: 2px; text-shadow: 2px 2px #000; }
+.cutscene-copy { position: absolute; right: clamp(18px,6vw,90px); bottom: clamp(18px,7vh,78px); width: min(570px,88vw); padding: 22px 25px; background: linear-gradient(135deg,#0a050de8,#45112fd9); border-left: 6px solid var(--pink); box-shadow: 10px 10px #050206cc,0 0 45px #ff269c33; text-align: left; backdrop-filter: blur(10px); transform: skew(-1deg); }
+.cutscene-rating { margin-bottom: 7px; color: var(--cyan); font: 10px 'Black Ops One',Impact,sans-serif; letter-spacing: 1.2px; }
+.cutscene-copy h2 { margin: 0 0 8px; font-size: clamp(25px,4vw,48px); letter-spacing: 4px; }
+.cutscene-copy b { color: var(--pink); font: 17px 'Black Ops One',Impact,sans-serif; letter-spacing: 1px; }
+.cutscene-copy p { min-height: 3.2em; margin: 8px 0 16px; color: #fff5fc; font: 20px/1.35 Oswald,Arial,sans-serif; text-wrap: balance; }
+.cutscene-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.cutscene-actions button { padding: 10px 16px; color: #fff; background: var(--pink); border: 1px solid #fff; font-size: 13px; }
+.cutscene-actions #cutscene-skip { background: #190e18dd; }
+.cutscene-actions #cutscene-tip { color: #160b12; background: var(--gold); border-color: #fff4bb; }
+.cutscene-fallback-copy { display: none; position: absolute; top: 42%; left: 50%; width: min(600px,80vw); color: var(--gold); font: 22px 'Black Ops One',Impact,sans-serif; text-align: center; transform: translate(-50%,-50%); }
+.cutscene-fallback #cutscene-stage { display: none; }
+.cutscene-fallback .cutscene-fallback-copy { display: block; }
+body.cutscene-active #mute { z-index: 90; }
+.cinema-choices { grid-template-columns: repeat(2,minmax(210px,330px)); }
+
 .cards { display: grid; grid-template-columns: repeat(4, minmax(130px, 200px)); gap: 14px; width: min(1000px, 95vw); }
 .after-dark { max-height: 61vh; padding: 6px; overflow: auto; }
 .card { position: relative; min-height: 235px; padding: 10px; background: #130c15; border: 2px solid #6e4169; box-shadow: 5px 5px #000; text-align: left; }
@@ -252,6 +281,8 @@ h2 { margin: 0; color: var(--gold); font: clamp(22px, 4vw, 50px) 'Black Ops One'
 
 @media (pointer: coarse) {
   body.game-active #mute { top: 76px; bottom: auto; }
+  #boss-card,
+  #achievement { bottom: calc(var(--touch-size,58px) + 20px); }
 }
 
 @media (max-width: 760px) {
@@ -281,6 +312,12 @@ h2 { margin: 0; color: var(--gold); font: clamp(22px, 4vw, 50px) 'Black Ops One'
   #boss-card img { width: 125px; height: 150px; }
   #boss-card b { font-size: 16px; }
   #boss-card em { font-size: 12px; }
+  .cutscene-header { right: 10px; left: 10px; font-size: 9px; }
+  .cutscene-copy { right: 12px; bottom: 12px; left: 12px; width: auto; padding: 14px 16px; }
+  .cutscene-copy h2 { font-size: 25px; }
+  .cutscene-copy p { min-height: 2.6em; font-size: 16px; }
+  .cutscene-actions button { padding: 8px 11px; font-size: 11px; }
+  .cinema-choices { grid-template-columns: 1fr 1fr; }
 }
 
 @media (max-height: 500px) {
@@ -307,6 +344,12 @@ h2 { margin: 0; color: var(--gold); font: clamp(22px, 4vw, 50px) 'Black Ops One'
   #overlay .menu-actions button { padding: 12px 20px; }
   .title-character { height: 66vh; opacity: .55; }
   .after-dark { max-height: 65vh; }
+  .cutscene-copy { right: 14px; bottom: 10px; width: min(560px,68vw); padding: 11px 15px; }
+  .cutscene-rating { font-size: 8px; }
+  .cutscene-copy h2 { margin-bottom: 3px; font-size: 22px; }
+  .cutscene-copy b { font-size: 13px; }
+  .cutscene-copy p { min-height: auto; margin: 4px 0 7px; font-size: 14px; }
+  .cutscene-actions button { padding: 6px 10px; font-size: 10px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

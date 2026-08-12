@@ -1,6 +1,6 @@
 import { chromium, expect, test } from '@playwright/test';
 
-test('desktop player journey covers difficulty, help, combat, pause and persistence', async ({ page }) => {
+test('desktop player journey covers difficulty, help, combat, pause and persistence', async ({ page },testInfo) => {
   const runtimeErrors: string[] = [];
   page.on('pageerror', error => runtimeErrors.push(error.message));
   page.on('console', message => {
@@ -13,6 +13,25 @@ test('desktop player journey covers difficulty, help, combat, pause and persiste
   await expect(page.locator('#start')).toBeVisible();
   await expect(page.locator('[data-diff]')).toHaveCount(4);
   await expect(page.locator('#rap-sheet')).toContainText('RAP SHEET');
+
+  await page.locator('#cinema').click();
+  await expect(page.locator('[data-cut]')).toHaveCount(4);
+  await page.locator('[data-cut="0"]').click();
+  await expect(page.locator('#cutscene')).not.toHaveClass(/gone/);
+  await expect(page.locator('#cutscene-stage canvas')).toBeVisible();
+  await expect(page.locator('#cutscene-title')).toHaveText('VELVET WARNING');
+  await expect(page.locator('.cutscene-rating')).toContainText('FICTIONAL ADULTS 21+');
+  await expect(page.locator('#cutscene-tip')).toBeVisible();
+  await page.locator('#cutscene-tip').click();
+  await expect(page.locator('#cutscene-speaker')).toHaveText('HOUSE MC');
+  await expect(page.locator('#cutscene-tip')).toContainText('$20 TIPPED');
+  await page.screenshot({path:testInfo.outputPath('desktop-cutscene.png')});
+  await page.locator('#cutscene-next').click();
+  await expect(page.locator('#cutscene-speaker')).toHaveText('JACK');
+  await page.locator('#cutscene-skip').click();
+  await expect(page.locator('#cutscene')).toHaveClass(/gone/);
+  await expect(page.locator('#modal')).toContainText('3D STORY CUTS');
+  await page.locator('#back').click();
 
   await page.locator('#cast').click();
   await expect(page.locator('.after-dark .card')).toHaveCount(8);
@@ -54,7 +73,7 @@ test('desktop player journey covers difficulty, help, combat, pause and persiste
   expect(runtimeErrors).toEqual([]);
 });
 
-test('mobile landscape exposes responsive touch combat controls', async () => {
+test('mobile landscape exposes responsive touch combat controls', async ({},testInfo) => {
   const mobileBrowser = await chromium.launch({
     executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,
     args: process.env.PLAYWRIGHT_CHROMIUM_ARGS_JSON ? JSON.parse(process.env.PLAYWRIGHT_CHROMIUM_ARGS_JSON) as string[] : [],
@@ -74,9 +93,15 @@ test('mobile landscape exposes responsive touch combat controls', async () => {
 
   await page.goto('/', { waitUntil: 'networkidle' });
   await expect(page.locator('[data-diff]')).toHaveCount(4);
+  await page.locator('#cinema').click();
+  await page.locator('[data-cut="0"]').click();
+  await expect(page.locator('#cutscene-stage canvas')).toBeVisible();
+  await page.screenshot({path:testInfo.outputPath('mobile-cutscene.png')});
+  await page.locator('#cutscene-skip').click();
+  await page.locator('#back').click();
   await page.locator('#start').click();
   await expect(page.locator('#touch')).not.toHaveClass(/gone/);
-  await expect(page.locator('#touch button')).toHaveCount(9);
+  await expect(page.locator('#touch button')).toHaveCount(10);
   await page.locator('[data-action="right"]').dispatchEvent('pointerdown');
   await page.waitForTimeout(250);
   await page.locator('[data-action="right"]').dispatchEvent('pointerup');
@@ -92,7 +117,7 @@ test('mobile landscape exposes responsive touch combat controls', async () => {
 test('first loaded production build remains playable offline', async ({ page, context }) => {
   await page.goto('/', { waitUntil: 'networkidle' });
   await page.waitForFunction(async () => {
-    const cache = await caches.open('ts69-v3');
+    const cache = await caches.open('ts69-v4');
     return (await cache.keys()).length > 10;
   });
 

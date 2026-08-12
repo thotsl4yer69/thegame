@@ -16,18 +16,31 @@
     <section id="overlay" class="overlay">
       <img class="title-character title-jack" src="/assets/characters/jack-row0/01.png" alt="">
       <img class="title-character title-roxi" src="/assets/characters/woman-row0/01.png" alt="">
-      <div class="age">18+ PERSONAL PARODY • BAD TASTE GUARANTEED • BUILD 1.1</div>
+      <div class="age">18+ PERSONAL PARODY • BAD TASTE GUARANTEED • BUILD 1.2</div>
       <h1>THOTSL4YER<span>69</span></h1><h2>JUST THE TIP</h2>
       <p class="lede">FOUR VENUES. ONE COOKED NIGHT. ABSOLUTELY NO PERSONAL GROWTH.</p>
       <div id="difficulty"><span>BAD-DECISION LEVEL</span><button class="diff" data-diff="messy">MESSY</button><button class="diff active" data-diff="cooked">COOKED</button><button class="diff" data-diff="unhinged">UNHINGED</button><button class="diff feral" data-diff="feral">FERAL</button></div>
       <p id="difficulty-copy" aria-live="polite">THE INTENDED BAD DECISION. NORMAL DAMAGE, NORMAL HAZARDS, NORMAL REGRET.</p>
-      <div class="menu-actions"><button id="start">START MAKING MISTAKES</button><button id="how" class="secondary">HOW TO SURVIVE</button><button id="cast" class="secondary">MEET THE PROBLEMS</button></div>
+      <div class="menu-actions"><button id="start">START MAKING MISTAKES</button><button id="how" class="secondary">HOW TO SURVIVE</button><button id="cast" class="secondary">MEET THE PROBLEMS</button><button id="cinema" class="secondary">3D STORY CUTS</button></div>
       <p class="keys"><b>MOVE</b> A/D　<b>JUMP</b> W/SPACE　<b>SMACK</b> J　<b>HEAVY</b> H　<b>DASH</b> SHIFT　<b>PACKET</b> K　<b>PIGEON</b> L　<b>MAKE IT RAIN</b> T　<b>PAUSE</b> ESC</p>
       <p id="best"></p>
       <p id="rap-sheet"></p>
     </section>
     <section id="modal" class="overlay gone"></section>
-    <nav id="touch" class="gone" aria-label="Touch controls"><div><button data-action="left" aria-label="Move left">◀</button><button data-action="right" aria-label="Move right">▶</button><button data-action="jump" aria-label="Jump">↑</button></div><div><button data-action="dash">DASH</button><button data-action="hit">SMACK</button><button data-action="heavy">HARD</button><button data-action="rain">$$$</button><button data-action="packet">BAG</button><button data-action="pigeon">BIRD</button></div></nav>
+    <section id="cutscene" class="cutscene gone" role="dialog" aria-modal="true" aria-labelledby="cutscene-title">
+      <div id="cutscene-stage"></div>
+      <div class="cutscene-grain" aria-hidden="true"></div>
+      <header class="cutscene-header"><span id="cutscene-kicker">ACT I AFTER HOURS</span><span id="cutscene-location">PRIVATE BOOTH</span></header>
+      <article class="cutscene-copy">
+        <div class="cutscene-rating">FICTIONAL ADULTS 21+ • CONSENSUAL FILTH • NON-EXPLICIT CINEMATIC</div>
+        <h2 id="cutscene-title">VELVET WARNING</h2>
+        <b id="cutscene-speaker">ROXI REDLINE</b>
+        <p id="cutscene-line" aria-live="polite"></p>
+        <div class="cutscene-actions"><button id="cutscene-next">NEXT INDISCRETION</button><button id="cutscene-tip">TIP THE STAGE $20</button><button id="cutscene-skip">SKIP THE FOREPLAY</button></div>
+      </article>
+      <div class="cutscene-fallback-copy">WEBGL LEFT THE CLUB. THE FILTHY STORY CONTINUES IN TEXT.</div>
+    </section>
+    <nav id="touch" class="gone" aria-label="Touch controls"><div><button data-action="left" aria-label="Move left">◀</button><button data-action="right" aria-label="Move right">▶</button><button data-action="jump" aria-label="Jump">↑</button></div><div><button data-action="dash">DASH</button><button data-action="hit">SMACK</button><button data-action="heavy">HARD</button><button data-action="rain">$$$</button><button data-action="packet">BAG</button><button data-action="pigeon">BIRD</button><button data-action="pause">PAUSE</button></div></nav>
     <button id="mute" aria-label="Toggle audio">♪</button>
   </main>
   <script type="module" src="/src/main.ts"></script>
