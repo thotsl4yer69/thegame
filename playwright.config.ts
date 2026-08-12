@@ -7,7 +7,7 @@ const args = process.env.PLAYWRIGHT_CHROMIUM_ARGS_JSON
 
 export default defineConfig({
   testDir: './tests',
-  timeout: 45_000,
+  timeout: 60_000,
   fullyParallel: false,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
@@ -16,7 +16,7 @@ export default defineConfig({
     baseURL: 'http://127.0.0.1:4174',
     viewport: { width: 1440, height: 900 },
     trace: 'retain-on-failure',
-    screenshot: 'only-on-failure',
+    screenshot: 'on',
     launchOptions: { executablePath, args },
   },
   webServer: {

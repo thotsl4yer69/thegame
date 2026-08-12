@@ -8,6 +8,7 @@ import './polish.css';
 import {GameScene} from './game/GameScene';
 import {FilthyAudio} from './game/audio';
 import {UPGRADES} from './game/data';
+import {achievementCount,bestScore,formatTime,rankRun,readGallery,readStats,recordRun} from './game/progression';
 
 const q=<T extends HTMLElement>(selector:string)=>document.querySelector(selector) as T;
 const audio=new FilthyAudio();
@@ -45,40 +46,9 @@ const DIFFICULTY_COPY:Record<string,string>={
   feral:'NO ALIBI MODE. 55% TOUGHER ENEMIES, 48% HARDER HITS, RELENTLESS HAZARDS, 2.25× SCORE.'
 };
 
-type RunStats={runs:number;clears:number;totalKills:number;totalDamage:number;bestScore:number;fastestClear:number};
-const STATS_KEY='ts69-stats';
-const emptyStats=():RunStats=>({runs:0,clears:0,totalKills:0,totalDamage:0,bestScore:0,fastestClear:0});
-function readStats():RunStats{
-  try{return {...emptyStats(),...JSON.parse(localStorage.getItem(STATS_KEY)||'{}')}}catch{return emptyStats()}
-}
-function writeStats(stats:RunStats){localStorage.setItem(STATS_KEY,JSON.stringify(stats))}
-function formatTime(seconds:number){return `${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`}
-function rankRun(score:number,cleared:boolean){
-  if(cleared&&score>=40000)return 'S';
-  if(score>=26000)return 'A';
-  if(score>=16000)return 'B';
-  if(score>=8000)return 'C';
-  return 'D';
-}
-function recordRun({score,kills,damage,cleared,seconds=0}:{score:number;kills:number;damage:number;cleared:boolean;seconds?:number}){
-  const stats=readStats();
-  stats.runs++;
-  stats.clears+=cleared?1:0;
-  stats.totalKills+=kills;
-  stats.totalDamage+=Math.round(damage);
-  stats.bestScore=Math.max(stats.bestScore,score);
-  if(cleared&&seconds>0)stats.fastestClear=stats.fastestClear?Math.min(stats.fastestClear,seconds):seconds;
-  writeStats(stats);
-  renderTitleStats();
-  return stats;
-}
 function renderTitleStats(){
   const stats=readStats();
-  const savedBest=Number(localStorage.getItem('ts69-best')||0);
-  let achievements=0;
-  try{achievements=JSON.parse(localStorage.getItem('ts69-achievements')||'[]').length}catch{}
-  const best=Math.max(savedBest,stats.bestScore);
-  q('#best').textContent=`PERSONAL WORST: ${best.toLocaleString()} POINTS • ${achievements}/8 DEGENERACIES UNLOCKED`;
+  q('#best').textContent=`PERSONAL WORST: ${bestScore().toLocaleString()} POINTS • ${achievementCount()}/8 DEGENERACIES UNLOCKED`;
   q('#rap-sheet').textContent=stats.runs
     ?`RAP SHEET: ${stats.runs} RUN${stats.runs===1?'':'S'} • ${stats.clears} DAWN CLEAR${stats.clears===1?'':'S'} • ${stats.totalKills} PROBLEMS DROPPED${stats.fastestClear?` • FASTEST ${formatTime(stats.fastestClear)}`:''}`
     :'RAP SHEET: CLEAN. TEMPORARILY.';
@@ -122,7 +92,7 @@ function showHowTo(){
 }
 function showCast(){
   let unlocked:string[]=[];
-  try{unlocked=JSON.parse(localStorage.getItem('ts69-gallery')||'[]')}catch{}
+  unlocked=readGallery();
   const cast=[
     ['roxi','Roxi Redline','woman-row0','A five-alarm redhead with expensive taste and thighs that could cancel your insurance.'],
     ['lexi','Lexi Platinum','woman-row1','VIP hostility poured into silver. Bottle service, zero emotional service.'],
