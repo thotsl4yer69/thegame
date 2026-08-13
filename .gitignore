@@ -2,8 +2,26 @@ node_modules/
 dist/
 generated_images/
 tmp/
-*.zip
-*.log
 playwright-report/
 test-results/
+coverage/
+
+# Local environment / private build config
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Archives / logs
+*.zip
+*.bak
+*.log
+
+# IDE / OS
+.vscode/
+.idea/
 .DS_Store
+Thumbs.db
