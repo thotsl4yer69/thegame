@@ -8,28 +8,28 @@ type Cutscene={id:CutsceneId;kicker:string;title:string;location:string;palette:
 
 export const CUTSCENES:readonly Cutscene[]=[
   {id:0,kicker:'ACT I AFTER HOURS',title:'VELVET WARNING',location:'THE PINK PIGEON • PRIVATE BOOTH',palette:[0xff269c,0x19ead8,0x160513],beats:[
-    {speaker:'ROXI REDLINE',shot:'lead',line:'You bought the VIP booth and ordered tap water. That is either discipline or a cry for help.'},
-    {speaker:'JACK',shot:'jack',line:'Financial ruin later. Right now I am investigating. The view is an aggressively distracting workplace hazard.'},
-    {speaker:'ROXI REDLINE',shot:'intimate',line:'Cute. Viper knows who rigged tonight. She also likes confidence, clean questions and men who can follow one instruction.'},
-    {speaker:'PINK PIGEON',shot:'wide',line:'Roxi steals his collar, his last coherent thought and twenty dollars in exactly that order. The curtains decide they have seen enough.'}
+    {speaker:'ROXI REDLINE',shot:'lead',line:'You bought the VIP booth, ordered tap water, and have not looked at my face once. Babe, at least lie to me professionally.'},
+    {speaker:'JACK',shot:'jack',line:'I am investigating. Your outfit is obstructing justice.'},
+    {speaker:'ROXI REDLINE',shot:'intimate',line:'Eyes up, hero. Viper has the name you want. Ask nicely and maybe I stop sitting this close.'},
+    {speaker:'PINK PIGEON',shot:'wide',line:'Roxi crosses one lacquered thigh over his escape route, steals his collar and twenty bucks. Jack files absolutely no complaint.'}
   ]},
   {id:1,kicker:'ACT II AFTER HOURS',title:'NEON SAFE WORD',location:'BACK ALLEY • 2:43AM',palette:[0x19ead8,0xff375f,0x03131a],beats:[
-    {speaker:'VIPER VICE',shot:'lead',line:'You survived Roxi and still came down this alley. Your threat assessment is adorable.'},
-    {speaker:'JACK',shot:'jack',line:'I prefer “commitment to the bit.” It sounds better on the incident report.'},
-    {speaker:'VIPER VICE',shot:'intimate',line:'Bianca owns the casino, the debt and probably this puddle. Take the key. Try not to make that face.'},
-    {speaker:'CITY CCTV',shot:'wide',line:'She clips the key to his vest, gives him one professionally irresponsible wink and disappears into steam before the camera can invoice her.'}
+    {speaker:'VIPER VICE',shot:'lead',line:'Roxi says you survived the booth without proposing marriage. Barely. That is almost attractive.'},
+    {speaker:'JACK',shot:'jack',line:'Operational discipline. Mostly above the belt.'},
+    {speaker:'VIPER VICE',shot:'intimate',line:'Keep talking like that and I will make you earn the key the embarrassing way. Bianca owns the casino, the debt and your next bad idea.'},
+    {speaker:'CITY CCTV',shot:'wide',line:'She slides the key inside his jacket, lets one finger linger at the lapel, then leaves him arguing with his own pulse.'}
   ]},
   {id:2,kicker:'ACT III AFTER HOURS',title:'THE HOUSE EDGE',location:'CASINO PURGATORY • HIGH-LIMIT LOUNGE',palette:[0xffc229,0xff269c,0x190c04],beats:[
-    {speaker:'BIANCA BLACKOUT',shot:'lead',line:'That key gets you into the lounge. Your cheekbones bought the extra ten seconds.'},
-    {speaker:'JACK',shot:'jack',line:'Finally, an economy I understand.'},
-    {speaker:'BIANCA BLACKOUT',shot:'intimate',line:'Damo is waiting at dawn. Beat him and the tab disappears. Impress me and I may misplace a few more records.'},
-    {speaker:'HOUSE SECURITY',shot:'wide',line:'The doors lock. Jack mistakes this for chemistry. Security updates the incident log.'}
+    {speaker:'BIANCA BLACKOUT',shot:'lead',line:'That key gets you into my lounge. The stare costs extra.'},
+    {speaker:'JACK',shot:'jack',line:'Put it on my tab. Apparently financial ruin is my love language.'},
+    {speaker:'BIANCA BLACKOUT',shot:'intimate',line:'Beat Damo and your tab vanishes. Keep looking at me like that and I may open a second one.'},
+    {speaker:'HOUSE SECURITY',shot:'wide',line:'The doors lock. Bianca leans closer. Jack decides this counts as due diligence. Security strongly disagrees.'}
   ]},
   {id:3,kicker:'FINAL CUT • 5:58AM',title:'DAWN HAS A WALK OF SHAME',location:'KEBAB JUDGMENT • FIRST LIGHT',palette:[0xff7849,0xffd229,0x18080d],beats:[
-    {speaker:'ROXI REDLINE',shot:'lead',line:'Four venues, three terrible plans and one kebab. You really committed to the evening.'},
-    {speaker:'JACK',shot:'jack',line:'I would like the record to show the kebab was strategic.'},
-    {speaker:'ROXI REDLINE',shot:'intimate',line:'Ask nicely, menace. Sunrise has been waiting all night to judge you.'},
-    {speaker:'DAWN',shot:'wide',line:'He does. She catches him by the collar. Somewhere, a pigeon clocks off with full entitlements.'}
+    {speaker:'ROXI REDLINE',shot:'lead',line:'Four venues, three catastrophically bad decisions, two women who could ruin you, one kebab. You are consistent.'},
+    {speaker:'JACK',shot:'jack',line:'I prefer committed.'},
+    {speaker:'ROXI REDLINE',shot:'intimate',line:'Come here, menace. If sunrise wants to judge us, it can buy a ticket.'},
+    {speaker:'DAWN',shot:'wide',line:'She hooks two fingers in his collar and drags him into the last patch of neon. The pigeon respectfully turns around.'}
   ]}
 ] as const;
 
@@ -504,8 +504,8 @@ export class CutsceneDirector{
     this.query<HTMLButtonElement>('#cutscene-tip').textContent=`$${this.tipTotal} TIPPED • AGAIN`;
     this.query('#cutscene-speaker').textContent='HOUSE MC';
     this.query('#cutscene-line').textContent=this.tipTotal>=100
-      ?'The stage erupts. Roxi takes the spotlight hostage. Even the pigeon looks away out of professional courtesy.'
-      :'Roxi catches the note against one glittering boot and gives the rail a slow turn worth at least another irresponsible twenty.';
+      ?'The room loses its mind. Roxi takes the spotlight hostage with one slow turn and Jack forgets what investigation means.'
+      :'Roxi catches the note against one glittering boot, tucks it into her garter and gives the rail a look worth another terrible financial decision.';
     if('vibrate' in navigator)navigator.vibrate([12,24,12]);
   }
 
