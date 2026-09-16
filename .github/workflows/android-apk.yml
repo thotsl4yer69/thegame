@@ -13,8 +13,8 @@ permissions:
 
 jobs:
   apk:
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
+    runs-on: windows-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -36,8 +36,7 @@ jobs:
       - run: npx cap add android
       - run: npx cap sync android
       - run: node scripts/configure-android.mjs
-      - run: chmod +x android/gradlew
-      - run: ./android/gradlew --no-daemon assembleDebug
+      - run: .\android\gradlew.bat --no-daemon assembleDebug
 
       - name: Upload playable APK
         uses: actions/upload-artifact@v4
