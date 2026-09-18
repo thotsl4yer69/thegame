@@ -480,3 +480,217 @@ body.combo-hot #combo {
     animation: none !important;
   }
 }
+
+
+/* === THOTSL4YER69 DEBAUCHERY CUT === */
+#marquee {
+  position: absolute;
+  z-index: 75;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 24px;
+  overflow: hidden;
+  color: #11030c;
+  background: linear-gradient(90deg,var(--gold),#ff8bc8,var(--cyan),var(--gold));
+  border-bottom: 2px solid #fff8;
+  font: 10px/22px 'Black Ops One',Impact,sans-serif;
+  letter-spacing: 1.5px;
+  white-space: nowrap;
+  pointer-events: none;
+  transition: opacity .2s;
+}
+#marquee span {
+  display: inline-block;
+  min-width: 200%;
+  animation: ts69-marquee 18s linear infinite;
+}
+body.game-active #marquee,
+body.cutscene-active #marquee { opacity: 0; }
+
+#overlay {
+  background:
+    radial-gradient(circle at 78% 34%,#ff269c29,transparent 23%),
+    radial-gradient(circle at 18% 62%,#19ead822,transparent 28%),
+    radial-gradient(circle at 50% 35%,#66104fe8,#100712f7 58%,#030203 100%);
+}
+#overlay h1 {
+  filter: drop-shadow(0 0 20px #ff269c55);
+  animation: ts69-title-breathe 2.8s ease-in-out infinite;
+}
+#overlay .lede::before { content:'THOT-O-VISION™  '; color:var(--gold); font-family:'Black Ops One',Impact,sans-serif; }
+#overlay .menu-actions button:first-child {
+  background: linear-gradient(135deg,#ff269c,#de0847);
+  box-shadow: 9px 9px var(--cyan),0 0 24px #ff269c66;
+}
+
+#debauchery-stamp {
+  position: absolute;
+  z-index: 58;
+  top: 20%;
+  left: 50%;
+  min-width: min(520px,82vw);
+  padding: 12px 18px 14px;
+  color: #0a0207;
+  background: var(--gold);
+  border: 4px solid #fff;
+  box-shadow: 8px 8px #ff269c, -5px -5px #19ead8, 0 0 35px #ffd22988;
+  text-align: center;
+  pointer-events: none;
+  transform: translateX(-50%) rotate(-2deg);
+}
+#debauchery-stamp small {
+  display: block;
+  font: 10px 'Black Ops One',Impact,sans-serif;
+  letter-spacing: 4px;
+}
+#debauchery-stamp b {
+  display: block;
+  margin-top: 3px;
+  font: clamp(21px,4vw,46px) 'Black Ops One',Impact,sans-serif;
+  line-height: .95;
+  text-transform: uppercase;
+}
+#debauchery-stamp.debauchery-pop { animation: ts69-debauchery-pop .62s cubic-bezier(.15,.9,.2,1); }
+
+#venue-card {
+  position: absolute;
+  z-index: 55;
+  top: 50%;
+  left: 50%;
+  width: min(780px,88vw);
+  padding: 24px 28px;
+  color: #fff;
+  background: linear-gradient(105deg,#050206f4,#410c32ef 58%,#071c1bef);
+  border: 2px solid #fff;
+  border-left: 9px solid var(--pink);
+  box-shadow: 12px 12px #000b,0 0 50px #ff269c44;
+  text-align: left;
+  pointer-events: none;
+  transform: translate(-50%,-50%) skew(-2deg);
+}
+#venue-card small {
+  color: var(--cyan);
+  font: 12px 'Black Ops One',Impact,sans-serif;
+  letter-spacing: 5px;
+}
+#venue-card b {
+  display: block;
+  margin: 4px 0 5px;
+  color: var(--gold);
+  font: clamp(28px,5vw,62px) 'Black Ops One',Impact,sans-serif;
+  line-height: .95;
+  text-shadow: 3px 3px var(--pink);
+}
+#venue-card em {
+  color: #fff4fb;
+  font: 17px Oswald,Arial,sans-serif;
+  font-style: normal;
+  letter-spacing: 1.5px;
+}
+#venue-card.venue-card-pop { animation: ts69-venue-pop .78s cubic-bezier(.16,.9,.2,1); }
+
+/* THOT-O-VISION broadcast chrome */
+.cutscene-chrome {
+  position: absolute;
+  z-index: 11;
+  top: max(43px,calc(env(safe-area-inset-top) + 24px));
+  left: 22px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  pointer-events: none;
+}
+.cutscene-chrome span,
+.cutscene-chrome em {
+  padding: 5px 8px;
+  border: 1px solid #ffffff88;
+  background: #050206c7;
+  box-shadow: 3px 3px #000a;
+  font: 9px 'Black Ops One',Impact,sans-serif;
+  letter-spacing: 1.5px;
+  font-style: normal;
+}
+.cutscene-chrome span { color: var(--cut-accent,var(--pink)); }
+.cutscene-chrome em { color: var(--gold); }
+
+.cutscene-stamp {
+  position: absolute;
+  z-index: 10;
+  top: 21%;
+  left: 5%;
+  max-width: 35vw;
+  padding: 7px 11px;
+  color: #080309;
+  background: var(--cut-accent,var(--pink));
+  border: 3px solid #fff;
+  box-shadow: 6px 6px #000a;
+  font: clamp(10px,1.8vw,20px) 'Black Ops One',Impact,sans-serif;
+  letter-spacing: 1px;
+  pointer-events: none;
+  transform: rotate(-5deg);
+  transition: transform .22s, opacity .2s;
+}
+#cutscene-stage.cutscene-beat ~ .cutscene-stamp { transform: rotate(-3deg) scale(1.05); }
+
+.cutscene-copy::before {
+  content:'THOT-O-VISION // INCIDENT REPORT';
+  display:block;
+  margin-bottom:6px;
+  color:var(--gold);
+  font:8px 'Black Ops One',Impact,sans-serif;
+  letter-spacing:2px;
+}
+.cutscene-actions #cutscene-next { box-shadow: 4px 4px var(--cyan); }
+.cutscene-actions #cutscene-tip { box-shadow: 4px 4px var(--pink); }
+
+/* motion-comic faux flash-frame and club light */
+.cutscene-frame::before {
+  content:'';
+  position:absolute;
+  z-index:2;
+  inset:0;
+  background:
+    linear-gradient(115deg,transparent 34%,#ffffff11 45%,transparent 53%),
+    repeating-linear-gradient(90deg,transparent 0 90px,#ff269c0b 91px 94px);
+  mix-blend-mode:screen;
+  pointer-events:none;
+  animation: ts69-club-scan 3.2s ease-in-out infinite;
+}
+.cutscene-frame::after {
+  content:'';
+  position:absolute;
+  z-index:5;
+  inset:0;
+  box-shadow: inset 0 0 120px #000, inset 0 0 24px var(--cut-accent,#ff269c);
+  pointer-events:none;
+}
+
+/* HUD readability on phone: flatter, less wasted black header. */
+@media (pointer:coarse) {
+  #hud {
+    background: linear-gradient(#050306ed 0%,#050306b8 65%,transparent);
+    padding-top: max(8px,env(safe-area-inset-top));
+  }
+  #combo { top: 76px; font-size: 38px; }
+  #debauchery-stamp { top: 18%; }
+}
+
+@media (max-height:500px) {
+  #venue-card { width:min(700px,78vw); padding:14px 20px; }
+  #venue-card b { font-size:34px; }
+  #venue-card em { font-size:13px; }
+  #debauchery-stamp { top:15%; min-width:440px; padding:8px 14px; }
+  .cutscene-stamp { top:17%; left:3%; max-width:31vw; }
+  .cutscene-chrome { top:max(31px,calc(env(safe-area-inset-top) + 19px)); left:12px; }
+}
+
+@keyframes ts69-marquee { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+@keyframes ts69-title-breathe { 0%,100%{filter:drop-shadow(0 0 14px #ff269c55)} 50%{filter:drop-shadow(0 0 30px #19ead877)} }
+@keyframes ts69-debauchery-pop { 0%{opacity:0;transform:translateX(-50%) scale(.5) rotate(-9deg)} 55%{opacity:1;transform:translateX(-50%) scale(1.08) rotate(2deg)} 100%{transform:translateX(-50%) scale(1) rotate(-2deg)} }
+@keyframes ts69-venue-pop { 0%{opacity:0;transform:translate(-50%,-46%) scale(.84) skew(-5deg)} 55%{opacity:1;transform:translate(-50%,-50%) scale(1.03) skew(-1deg)} 100%{transform:translate(-50%,-50%) scale(1) skew(-2deg)} }
+@keyframes ts69-club-scan { 0%,100%{opacity:.3;transform:translateX(-4%)} 50%{opacity:.75;transform:translateX(4%)} }
+
+@media (prefers-reduced-motion:reduce) {
+  #marquee span,#overlay h1,.cutscene-frame::before { animation:none!important; }
+}
