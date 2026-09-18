@@ -48,7 +48,7 @@ export class GameScene extends Phaser.Scene{
   if(grounded)this.lastGroundedAt=time;
   const left=!stunned&&(this.cursors.left.isDown||this.keys.A.isDown||this.touch.left),right=!stunned&&(this.cursors.right.isDown||this.keys.D.isDown||this.touch.right),dir=(right?1:0)-(left?1:0),dt=Math.min(.05,delta/1000);
   const approach=(value:number,target:number,step:number)=>value<target?Math.min(value+step,target):Math.max(value-step,target);
-  const topSpeed=315,accel=grounded?1900:1180,brake=grounded?2450:760,steer=this.attacking?.42:1,target=dir*topSpeed*steer;
+  const topSpeed=315,accel=grounded?1900:1180,brake=grounded?2450:760,steer=this.attacking ? .42 : 1,target=dir*topSpeed*steer;
   if(!stunned){
     if(dir){body.setVelocityX(approach(body.velocity.x,target,accel*steer*dt));this.player.setFlipX(dir<0);if(grounded&&!this.attacking)this.player.play('jack-run',true)}
     else if(!this.attacking){body.setVelocityX(approach(body.velocity.x,0,brake*dt));if(grounded&&Math.abs(body.velocity.x)<20)this.player.play('jack-idle',true)}
