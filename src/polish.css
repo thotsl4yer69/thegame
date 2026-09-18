@@ -186,3 +186,297 @@ body.combo-hot #combo {
   #shell.high-popped::after,
   #shell.boss-impact #boss-card { animation: none !important; }
 }
+
+/* Motion-comic cutscenes: deliberately reuse the game production art. */
+#cutscene-stage {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #050206;
+}
+
+.cutscene-frame {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #070308;
+  isolation: isolate;
+}
+
+.cutscene-bg {
+  position: absolute;
+  inset: -3%;
+  width: 106%;
+  height: 106%;
+  object-fit: cover;
+  object-position: center;
+  filter: saturate(1.16) contrast(1.08) brightness(.72);
+  transform: scale(1.04);
+  animation: cutscene-bg-drift 9s ease-in-out infinite alternate;
+}
+
+.cutscene-wash {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background:
+    linear-gradient(90deg, #050206d9 0%, transparent 38%, transparent 66%, #050206a8 100%),
+    linear-gradient(0deg, #050206ee 0%, transparent 34%, transparent 74%, #05020666 100%),
+    radial-gradient(circle at 70% 30%, color-mix(in srgb, var(--cut-accent, #ff269c) 40%, transparent), transparent 44%);
+  mix-blend-mode: normal;
+}
+
+.cutscene-character {
+  position: absolute;
+  z-index: 3;
+  bottom: -6%;
+  height: min(88vh, 880px);
+  max-width: 58vw;
+  object-fit: contain;
+  object-position: bottom;
+  image-rendering: auto;
+  pointer-events: none;
+  transform-origin: 50% 100%;
+  filter: drop-shadow(0 16px 20px #000c) drop-shadow(0 0 18px color-mix(in srgb, var(--cut-accent, #ff269c) 42%, transparent));
+  transition: transform .42s cubic-bezier(.2,.8,.2,1), opacity .3s ease, filter .3s ease;
+}
+
+.cutscene-jack {
+  left: 2%;
+  transform: translateX(-4%) scale(.86);
+}
+
+.cutscene-lead {
+  right: 2%;
+  transform: translateX(4%) scale(.96);
+}
+
+#cutscene-stage[data-shot="lead"] .cutscene-lead {
+  transform: translateX(-7%) scale(1.18);
+}
+#cutscene-stage[data-shot="lead"] .cutscene-jack {
+  transform: translateX(-18%) scale(.72);
+  opacity: .48;
+}
+
+#cutscene-stage[data-shot="jack"] .cutscene-jack {
+  transform: translateX(8%) scale(1.1);
+}
+#cutscene-stage[data-shot="jack"] .cutscene-lead {
+  transform: translateX(18%) scale(.76);
+  opacity: .55;
+}
+
+#cutscene-stage[data-shot="intimate"] .cutscene-jack {
+  transform: translateX(25%) scale(.9) rotate(1deg);
+}
+#cutscene-stage[data-shot="intimate"] .cutscene-lead {
+  transform: translateX(-22%) scale(1.04) rotate(-1deg);
+}
+
+#cutscene-stage[data-shot="wide"] .cutscene-jack {
+  transform: translateX(4%) scale(.76);
+}
+#cutscene-stage[data-shot="wide"] .cutscene-lead {
+  transform: translateX(-4%) scale(.82);
+}
+
+#cutscene-stage[data-speaker="jack"] .cutscene-lead,
+#cutscene-stage[data-speaker="lead"] .cutscene-jack {
+  filter: brightness(.72) saturate(.75) drop-shadow(0 12px 18px #000d);
+}
+
+#cutscene-stage.cutscene-beat .cutscene-character {
+  animation: cutscene-beat-pop .34s cubic-bezier(.2,.8,.2,1);
+}
+
+.cutscene-fx {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.cutscene-fx > i {
+  position: absolute;
+  left: var(--x);
+  top: 12%;
+  width: 5px;
+  height: 5px;
+  background: var(--cut-accent, #ff269c);
+  box-shadow: 0 0 12px var(--cut-accent, #ff269c);
+  opacity: .4;
+  transform: translateX(var(--drift));
+  animation: cutscene-speck 3.6s linear infinite;
+  animation-delay: var(--delay);
+}
+
+.cutscene-cash {
+  position: absolute;
+  color: #a7ffb2;
+  font: 22px 'Black Ops One', Impact, sans-serif;
+  text-shadow: 2px 2px #041108, 0 0 9px #65ff7d;
+  animation: cutscene-cash-fall 1.15s cubic-bezier(.2,.7,.3,1) forwards;
+}
+
+.cutscene-lead.tip-pop {
+  animation: tip-pop .42s cubic-bezier(.2,.9,.2,1);
+}
+
+.cutscene-copy {
+  z-index: 9;
+  border-left-color: var(--cut-accent, var(--pink));
+  background: linear-gradient(135deg,#09050df2,#26091fe8 60%,#060307ef);
+  box-shadow: 10px 10px #050206dd,0 0 45px color-mix(in srgb, var(--cut-accent, #ff269c) 22%, transparent);
+}
+
+.cutscene-copy b {
+  color: var(--cut-accent, var(--pink));
+}
+
+.cutscene-header {
+  z-index: 10;
+}
+
+.cutscene-grain {
+  z-index: 6;
+  opacity: .025;
+}
+
+@keyframes cutscene-bg-drift {
+  from { transform: scale(1.04) translate3d(-1%, 0, 0); }
+  to { transform: scale(1.09) translate3d(1%, -1%, 0); }
+}
+@keyframes cutscene-beat-pop {
+  0% { filter: brightness(1.35) saturate(1.2); }
+  100% { filter: inherit; }
+}
+@keyframes cutscene-speck {
+  0% { transform: translate3d(var(--drift), 80vh, 0) rotate(0deg); opacity: 0; }
+  12% { opacity: .45; }
+  80% { opacity: .2; }
+  100% { transform: translate3d(calc(var(--drift) * -1), -20vh, 0) rotate(180deg); opacity: 0; }
+}
+@keyframes cutscene-cash-fall {
+  0% { transform: translate3d(0,-70px,0) rotate(0deg) scale(.7); opacity: 0; }
+  12% { opacity: 1; }
+  100% { transform: translate3d(var(--cash-x),72vh,0) rotate(var(--cash-r)) scale(1.05); opacity: 0; }
+}
+@keyframes tip-pop {
+  0% { transform: translateX(-22%) scale(1.04); }
+  45% { transform: translateX(-22%) scale(1.12) rotate(-2deg); }
+  100% { transform: translateX(-22%) scale(1.04); }
+}
+
+/* Mobile controls: primary combat stays reachable; utility actions no longer run off-screen. */
+#touch > .touch-move {
+  display: flex;
+  align-items: end;
+  gap: 7px;
+}
+
+#touch > .touch-combat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+#touch .touch-primary,
+#touch .touch-secondary {
+  display: flex;
+  align-items: end;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+#touch .touch-secondary button {
+  width: 44px;
+  height: 44px;
+  font-size: 9px;
+  border-width: 1px;
+  opacity: .86;
+}
+
+#touch .touch-primary button {
+  width: 60px;
+  height: 60px;
+  font-size: 12px;
+}
+
+@media (pointer: coarse) {
+  #touch {
+    right: max(8px, env(safe-area-inset-right));
+    left: max(8px, env(safe-area-inset-left));
+    align-items: flex-end;
+  }
+  #touch > .touch-move button {
+    width: 58px;
+    height: 58px;
+  }
+}
+
+@media (orientation: portrait) and (pointer: coarse) {
+  #touch {
+    bottom: max(8px, env(safe-area-inset-bottom));
+  }
+  #touch > .touch-move button {
+    width: 54px;
+    height: 54px;
+  }
+  #touch .touch-primary button {
+    width: 56px;
+    height: 56px;
+  }
+  #touch .touch-secondary button {
+    width: 40px;
+    height: 40px;
+    font-size: 8px;
+  }
+  .cutscene-character {
+    height: 61vh;
+    max-width: 76vw;
+    bottom: 28%;
+  }
+  .cutscene-jack { left: -15%; }
+  .cutscene-lead { right: -13%; }
+  #cutscene-stage[data-shot="lead"] .cutscene-lead { transform: translateX(-5%) scale(1.14); }
+  #cutscene-stage[data-shot="jack"] .cutscene-jack { transform: translateX(10%) scale(1.08); }
+  #cutscene-stage[data-shot="intimate"] .cutscene-jack { transform: translateX(22%) scale(.84); }
+  #cutscene-stage[data-shot="intimate"] .cutscene-lead { transform: translateX(-20%) scale(.98); }
+  .cutscene-copy {
+    right: 14px;
+    bottom: max(14px, env(safe-area-inset-bottom));
+    left: 14px;
+    width: auto;
+  }
+}
+
+@media (max-height: 500px) and (pointer: coarse) {
+  #touch > .touch-move button {
+    width: 50px;
+    height: 50px;
+  }
+  #touch .touch-primary button {
+    width: 52px;
+    height: 52px;
+  }
+  #touch .touch-secondary button {
+    width: 38px;
+    height: 38px;
+  }
+  .cutscene-character {
+    height: 92vh;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cutscene-bg,
+  #cutscene-stage.cutscene-beat .cutscene-character,
+  .cutscene-fx > i,
+  .cutscene-cash,
+  .cutscene-lead.tip-pop {
+    animation: none !important;
+  }
+}
