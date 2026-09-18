@@ -228,7 +228,7 @@ async function cacheReleaseAssets(){
   const cache=await caches.open(RELEASE_CACHE);
   await Promise.all([...new Set(urls)].map(async url=>{try{await cache.add(url)}catch{}}));
 }
-if('serviceWorker' in navigator&&import.meta.env.PROD)navigator.serviceWorker.register('/sw.js').then(()=>navigator.serviceWorker.ready).then(cacheReleaseAssets).catch(()=>{});
+if('serviceWorker' in navigator&&import.meta.env.PROD)navigator.serviceWorker.register('./sw.js').then(()=>navigator.serviceWorker.ready).then(cacheReleaseAssets).catch(()=>{});
 const idle=window.requestIdleCallback??((callback:IdleRequestCallback)=>window.setTimeout(()=>callback({didTimeout:false,timeRemaining:()=>0} as IdleDeadline),800));
 idle(()=>void cutscenes.preload().then(cacheReleaseAssets).catch(()=>{}));
 document.querySelectorAll<HTMLButtonElement>('#touch [data-action]').forEach(button=>{
