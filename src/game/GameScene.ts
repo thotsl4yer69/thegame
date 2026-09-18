@@ -51,7 +51,8 @@ export class GameScene extends Phaser.Scene{
   const topSpeed=315,accel=grounded?1900:1180,brake=grounded?2450:760,steer=this.attacking ? .42 : 1,target=dir*topSpeed*steer;
   if(!stunned){
     if(dir){body.setVelocityX(approach(body.velocity.x,target,accel*steer*dt));this.player.setFlipX(dir<0);if(grounded&&!this.attacking)this.player.play('jack-run',true)}
-    else if(!this.attacking){body.setVelocityX(approach(body.velocity.x,0,brake*dt));if(grounded&&Math.abs(body.velocity.x)<20)this.player.play('jack-idle',true)}
+    else if(this.attacking)body.setVelocityX(approach(body.velocity.x,0,650*dt));
+    else{body.setVelocityX(approach(body.velocity.x,0,brake*dt));if(grounded&&Math.abs(body.velocity.x)<20)this.player.play('jack-idle',true)}
   }
   if(Phaser.Input.Keyboard.JustDown(this.cursors.space)||Phaser.Input.Keyboard.JustDown(this.keys.W))this.jump();
   if(!stunned&&this.jumpQueuedUntil>=time&&(grounded||time-this.lastGroundedAt<=120)){this.jumpQueuedUntil=0;body.setVelocityY(-545);if('vibrate' in navigator)navigator.vibrate?.(6)}
