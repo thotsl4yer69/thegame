@@ -152,6 +152,7 @@ game.events.on('achievement',({name}:{name:string})=>{
   achievementTimer=window.setTimeout(()=>achievement.classList.add('gone'),2400);
 });
 game.events.on('debauchery',({name}:{name:string})=>{
+  audio.special();
   q('#debauchery-name').textContent=name;
   const stamp=q('#debauchery-stamp');
   stamp.classList.remove('gone');
