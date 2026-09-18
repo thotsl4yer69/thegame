@@ -39,6 +39,8 @@ const RELEASE_CACHE='ts69-v4';
 let toastTimer=0;
 let bossTimer=0;
 let achievementTimer=0;
+let debaucheryTimer=0;
+let venueTimer=0;
 let previousHp=100;
 let previousHigh=0;
 
@@ -148,6 +150,25 @@ game.events.on('achievement',({name}:{name:string})=>{
   vibrate([15,35,15]);
   clearTimeout(achievementTimer);
   achievementTimer=window.setTimeout(()=>achievement.classList.add('gone'),2400);
+});
+game.events.on('debauchery',({name}:{name:string})=>{
+  q('#debauchery-name').textContent=name;
+  const stamp=q('#debauchery-stamp');
+  stamp.classList.remove('gone');
+  pulseClass(stamp,'debauchery-pop',620);
+  vibrate([10,22,10]);
+  clearTimeout(debaucheryTimer);
+  debaucheryTimer=window.setTimeout(()=>stamp.classList.add('gone'),1450);
+});
+game.events.on('venueIntro',({act,name,line}:{act:string;name:string;line:string})=>{
+  q('#venue-card-act').textContent=act;
+  q('#venue-card-name').textContent=name;
+  q('#venue-card-line').textContent=line;
+  const card=q('#venue-card');
+  card.classList.remove('gone');
+  pulseClass(card,'venue-card-pop',780);
+  clearTimeout(venueTimer);
+  venueTimer=window.setTimeout(()=>card.classList.add('gone'),1550);
 });
 game.events.on('hud',(s:any)=>{
   if(s.hp<previousHp-.1)pulseClass(shell,'hud-hit',210);
