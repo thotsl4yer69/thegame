@@ -1,6 +1,6 @@
 export type CutsceneId=0|1|2|3;
 type Shot='wide'|'jack'|'lead'|'intimate';
-type Beat={speaker:string;line:string;shot:Shot;jackPose:1|2|3|4;leadPose:1|2|3|4};
+type Beat={speaker:string;line:string;shot:Shot;jackPose:1|2|3|4;leadPose:1|2|3|4;stamp:string};
 type Cutscene={
   id:CutsceneId;
   kicker:string;
@@ -11,6 +11,7 @@ type Cutscene={
   leadRow:number;
   jackRow:number;
   accent:string;
+  debauchery:number;
   beats:Beat[];
 };
 
@@ -25,11 +26,12 @@ export const CUTSCENES:readonly Cutscene[]=[
     leadRow:0,
     jackRow:0,
     accent:'#ff269c',
+    debauchery:69,
     beats:[
-      {speaker:'ROXI REDLINE',shot:'lead',jackPose:1,leadPose:2,line:'You bought the VIP booth, ordered tap water, and have not looked at my face once. Babe, at least lie to me professionally.'},
-      {speaker:'JACK',shot:'jack',jackPose:2,leadPose:2,line:'I am investigating. Your outfit is obstructing justice.'},
-      {speaker:'ROXI REDLINE',shot:'intimate',jackPose:3,leadPose:3,line:'Eyes up, hero. Viper has the name you want. Ask nicely and maybe I stop sitting this close.'},
-      {speaker:'PINK PIGEON',shot:'wide',jackPose:4,leadPose:4,line:'Roxi crosses one lacquered thigh over his escape route, steals his collar and twenty bucks. Jack files absolutely no complaint.'}
+      {speaker:'ROXI REDLINE',shot:'lead',jackPose:1,leadPose:2,stamp:'VIP ACCESS: QUESTIONABLE',line:'You bought the VIP booth, ordered tap water, and have not looked at my face once. Babe, at least lie to me professionally.'},
+      {speaker:'JACK',shot:'jack',jackPose:2,leadPose:2,stamp:'OBSTRUCTION OF JUSTICE',line:'I am investigating. Your outfit is obstructing justice.'},
+      {speaker:'ROXI REDLINE',shot:'intimate',jackPose:3,leadPose:3,stamp:'PERSONAL SPACE: CANCELLED',line:'Eyes up, hero. Viper has the name you want. Ask nicely and maybe I stop sitting this close.'},
+      {speaker:'PINK PIGEON',shot:'wide',jackPose:4,leadPose:4,stamp:'$20 POORER • 0% WISER',line:'Roxi crosses one lacquered thigh over his escape route, steals his collar and twenty bucks. Jack files absolutely no complaint.'}
     ]
   },
   {
@@ -42,11 +44,12 @@ export const CUTSCENES:readonly Cutscene[]=[
     leadRow:4,
     jackRow:1,
     accent:'#19ead8',
+    debauchery:78,
     beats:[
-      {speaker:'VIPER VICE',shot:'lead',jackPose:1,leadPose:2,line:'Roxi says you survived the booth without proposing marriage. Barely. That is almost attractive.'},
-      {speaker:'JACK',shot:'jack',jackPose:2,leadPose:2,line:'Operational discipline. Mostly above the belt.'},
-      {speaker:'VIPER VICE',shot:'intimate',jackPose:3,leadPose:3,line:'Keep talking like that and I will make you earn the key the embarrassing way. Bianca owns the casino, the debt and your next bad idea.'},
-      {speaker:'CITY CCTV',shot:'wide',jackPose:4,leadPose:4,line:'She slides the key inside his jacket, lets one finger linger at the lapel, then leaves him arguing with his own pulse.'}
+      {speaker:'VIPER VICE',shot:'lead',jackPose:1,leadPose:2,stamp:'ALLEY PRIVILEGES REVOKED',line:'Roxi says you survived the booth without proposing marriage. Barely. That is almost attractive.'},
+      {speaker:'JACK',shot:'jack',jackPose:2,leadPose:2,stamp:'HR WOULD LIKE A WORD',line:'Operational discipline. Mostly above the belt.'},
+      {speaker:'VIPER VICE',shot:'intimate',jackPose:3,leadPose:3,stamp:'SAFE WORD: BAD DECISION',line:'Keep talking like that and I will make you earn the key the embarrassing way. Bianca owns the casino, the debt and your next bad idea.'},
+      {speaker:'CITY CCTV',shot:'wide',jackPose:4,leadPose:4,stamp:'PULSE: UNPROFESSIONAL',line:'She slides the key inside his jacket, lets one finger linger at the lapel, then leaves him arguing with his own pulse.'}
     ]
   },
   {
@@ -59,11 +62,12 @@ export const CUTSCENES:readonly Cutscene[]=[
     leadRow:7,
     jackRow:2,
     accent:'#ffd229',
+    debauchery:88,
     beats:[
-      {speaker:'BIANCA BLACKOUT',shot:'lead',jackPose:1,leadPose:2,line:'That key gets you into my lounge. The stare costs extra.'},
-      {speaker:'JACK',shot:'jack',jackPose:2,leadPose:2,line:'Put it on my tab. Apparently financial ruin is my love language.'},
-      {speaker:'BIANCA BLACKOUT',shot:'intimate',jackPose:3,leadPose:3,line:'Beat Damo and your tab vanishes. Keep looking at me like that and I may open a second one.'},
-      {speaker:'HOUSE SECURITY',shot:'wide',jackPose:4,leadPose:4,line:'The doors lock. Bianca leans closer. Jack decides this counts as due diligence. Security strongly disagrees.'}
+      {speaker:'BIANCA BLACKOUT',shot:'lead',jackPose:1,leadPose:2,stamp:'HOUSE EDGE: BIANCA',line:'That key gets you into my lounge. The stare costs extra.'},
+      {speaker:'JACK',shot:'jack',jackPose:2,leadPose:2,stamp:'CREDIT SCORE: DECEASED',line:'Put it on my tab. Apparently financial ruin is my love language.'},
+      {speaker:'BIANCA BLACKOUT',shot:'intimate',jackPose:3,leadPose:3,stamp:'SECOND TAB: PENDING',line:'Beat Damo and your tab vanishes. Keep looking at me like that and I may open a second one.'},
+      {speaker:'HOUSE SECURITY',shot:'wide',jackPose:4,leadPose:4,stamp:'DUE DILIGENCE: FAILED',line:'The doors lock. Bianca leans closer. Jack decides this counts as due diligence. Security strongly disagrees.'}
     ]
   },
   {
@@ -76,11 +80,12 @@ export const CUTSCENES:readonly Cutscene[]=[
     leadRow:0,
     jackRow:3,
     accent:'#ff7849',
+    debauchery:99,
     beats:[
-      {speaker:'ROXI REDLINE',shot:'lead',jackPose:1,leadPose:2,line:'Four venues, three catastrophically bad decisions, two women who could ruin you, one kebab. You are consistent.'},
-      {speaker:'JACK',shot:'jack',jackPose:2,leadPose:2,line:'I prefer committed.'},
-      {speaker:'ROXI REDLINE',shot:'intimate',jackPose:3,leadPose:3,line:'Come here, menace. If sunrise wants to judge us, it can buy a ticket.'},
-      {speaker:'DAWN',shot:'wide',jackPose:4,leadPose:4,line:'She hooks two fingers in his collar and drags him into the last patch of neon. The pigeon respectfully turns around.'}
+      {speaker:'ROXI REDLINE',shot:'lead',jackPose:1,leadPose:2,stamp:'WALK OF SHAME: ELITE',line:'Four venues, three catastrophically bad decisions, two women who could ruin you, one kebab. You are consistent.'},
+      {speaker:'JACK',shot:'jack',jackPose:2,leadPose:2,stamp:'SELF-AWARENESS: LOW',line:'I prefer committed.'},
+      {speaker:'ROXI REDLINE',shot:'intimate',jackPose:3,leadPose:3,stamp:'SUNRISE CAN WAIT',line:'Come here, menace. If sunrise wants to judge us, it can buy a ticket.'},
+      {speaker:'DAWN',shot:'wide',jackPose:4,leadPose:4,stamp:'CASE CLOSED • DIGNITY OPEN',line:'She hooks two fingers in his collar and drags him into the last patch of neon. The pigeon respectfully turns around.'}
     ]
   }
 ] as const;
@@ -142,6 +147,7 @@ export class CutsceneDirector{
     this.query('#cutscene-kicker').textContent=this.current.kicker;
     this.query('#cutscene-title').textContent=this.current.title;
     this.query('#cutscene-location').textContent=this.current.location;
+    this.query('#cutscene-index').textContent=`DEBAUCHERY ${this.current.debauchery}%`;
     const tip=this.query<HTMLButtonElement>('#cutscene-tip');
     tip.classList.toggle('gone',id!==0);
     tip.textContent='TIP THE STAGE $20';
@@ -208,6 +214,8 @@ export class CutsceneDirector{
     this.stage.dataset.speaker=beat.speaker==='JACK'?'jack':beat.speaker===this.current.leadName?'lead':'narrator';
     this.query('#cutscene-speaker').textContent=beat.speaker;
     this.query('#cutscene-line').textContent=beat.line;
+    this.query('#cutscene-stamp').textContent=beat.stamp;
+    this.query('#cutscene-index').textContent=`DEBAUCHERY ${Math.min(100,this.current.debauchery+this.beat*3)}%`;
     this.query<HTMLButtonElement>('#cutscene-next').textContent=this.beat===this.current.beats.length-1?'CONTINUE THE BAD IDEA':'NEXT INDISCRETION';
 
     if(animate&&!this.reducedMotion){
@@ -242,6 +250,8 @@ export class CutsceneDirector{
     this.tipTotal+=20;
     this.query<HTMLButtonElement>('#cutscene-tip').textContent=`$${this.tipTotal} TIPPED • AGAIN`;
     this.query('#cutscene-speaker').textContent='HOUSE MC';
+    this.query('#cutscene-stamp').textContent=this.tipTotal>=100?'FINANCIAL DOMINATION: ACHIEVED':'MAKE IT RAIN: ACTIVE';
+    this.query('#cutscene-index').textContent=`DEBAUCHERY ${Math.min(100,(this.current?.debauchery??69)+Math.floor(this.tipTotal/20)*4)}%`;
     this.query('#cutscene-line').textContent=this.tipTotal>=100
       ?'Roxi pockets the cash, blows Jack a kiss and tells security to keep the idiot hydrated. The rail loses its collective mind.'
       :'Roxi snatches the note out of the air, turns slow enough to bankrupt common sense, and mouths “again” at Jack.';
