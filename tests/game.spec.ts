@@ -18,7 +18,7 @@ test('desktop player journey covers difficulty, help, combat, pause and persiste
   await expect(page.locator('[data-cut]')).toHaveCount(4);
   await page.locator('[data-cut="0"]').click();
   await expect(page.locator('#cutscene')).not.toHaveClass(/gone/);
-  await expect(page.locator('#cutscene-stage canvas')).toBeVisible();
+  await expect(page.locator('#cutscene-stage .cutscene-frame')).toBeVisible();
   await expect(page.locator('#cutscene-title')).toHaveText('VELVET WARNING');
   await expect(page.locator('.cutscene-rating')).toContainText('FICTIONAL ADULTS 21+');
   await expect(page.locator('#cutscene-tip')).toBeVisible();
@@ -30,7 +30,7 @@ test('desktop player journey covers difficulty, help, combat, pause and persiste
   await expect(page.locator('#cutscene-speaker')).toHaveText('JACK');
   await page.locator('#cutscene-skip').click();
   await expect(page.locator('#cutscene')).toHaveClass(/gone/);
-  await expect(page.locator('#modal')).toContainText('3D STORY CUTS');
+  await expect(page.locator('#modal')).toContainText('AFTER-HOURS CUTS');
   await page.locator('#back').click();
 
   await page.locator('#cast').click();
@@ -95,7 +95,7 @@ test('mobile landscape exposes responsive touch combat controls', async ({},test
   await expect(page.locator('[data-diff]')).toHaveCount(4);
   await page.locator('#cinema').click();
   await page.locator('[data-cut="0"]').click();
-  await expect(page.locator('#cutscene-stage canvas')).toBeVisible();
+  await expect(page.locator('#cutscene-stage .cutscene-frame')).toBeVisible();
   await page.screenshot({path:testInfo.outputPath('mobile-cutscene.png')});
   await page.locator('#cutscene-skip').click();
   await page.locator('#back').click();
