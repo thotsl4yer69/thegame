@@ -112,7 +112,7 @@ function showCast(){
 }
 
 function showCinema(){
-  modal.innerHTML=`<div class="age">AFTER-HOURS CINEMA • FICTIONAL ADULTS 21+</div><h2>3D STORY CUTS</h2><p>Replay the filthy connective tissue between venues.</p><div class="choices cinema-choices">${cutscenes.scenes.map(scene=>`<button class="choice" data-cut="${scene.id}"><b>${scene.title}</b><small>${scene.location}</small></button>`).join('')}</div><button id="back">BACK TO THE BAD IDEA</button>`;
+  modal.innerHTML=`<div class="age">AFTER-HOURS CINEMA • FICTIONAL ADULTS 21+</div><h2>AFTER-HOURS CUTS</h2><p>Replay the filthy motion-comic connective tissue between venues.</p><div class="choices cinema-choices">${cutscenes.scenes.map(scene=>`<button class="choice" data-cut="${scene.id}"><b>${scene.title}</b><small>${scene.location}</small></button>`).join('')}</div><button id="back">BACK TO THE BAD IDEA</button>`;
   modal.classList.remove('gone');
   modal.querySelectorAll<HTMLButtonElement>('[data-cut]').forEach(button=>button.onclick=async()=>{closeModal();overlay.classList.add('gone');await cutscenes.play(Number(button.dataset.cut) as CutsceneId);overlay.classList.remove('gone');showCinema()});
   q('#back').onclick=closeModal;
@@ -235,9 +235,13 @@ document.querySelectorAll<HTMLButtonElement>('#touch [data-action]').forEach(but
   const action=button.dataset.action!;
   button.addEventListener('pointerdown',event=>{
     event.preventDefault();
+    button.setPointerCapture?.(event.pointerId);
     vibrate(action==='hit'||action==='heavy'?14:8);
     game.events.emit('touch',action,true);
   });
-  for(const eventName of ['pointerup','pointercancel','pointerleave'])button.addEventListener(eventName,()=>game.events.emit('touch',action,false));
+  for(const eventName of ['pointerup','pointercancel'])button.addEventListener(eventName,event=>{
+    if(button.hasPointerCapture?.(event.pointerId))button.releasePointerCapture(event.pointerId);
+    game.events.emit('touch',action,false);
+  });
 });
 window.addEventListener('blur',()=>{if(modal.classList.contains('gone')&&cutsceneRoot.classList.contains('gone'))game.events.emit('autopause')});
