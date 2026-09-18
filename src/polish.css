@@ -356,7 +356,7 @@ body.combo-hot #combo {
   0% { transform: translate3d(var(--drift), 80vh, 0) rotate(0deg); opacity: 0; }
   12% { opacity: .45; }
   80% { opacity: .2; }
-  100% { transform: translate3d(calc(var(--drift) * -1), -20vh, 0) rotate(180deg); opacity: 0; }
+  100% { transform: translate3d(var(--drift), -20vh, 0) rotate(180deg); opacity: 0; }
 }
 @keyframes cutscene-cash-fall {
   0% { transform: translate3d(0,-70px,0) rotate(0deg) scale(.7); opacity: 0; }
