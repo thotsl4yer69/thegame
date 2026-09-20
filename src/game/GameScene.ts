@@ -510,6 +510,8 @@ export class GameScene extends Phaser.Scene{
         this.stagePole(zone.start+1110);
         this.dancerSilhouette(zone.start+720,390,0xff7bc7);
         this.dancerSilhouette(zone.start+1110,390,0xb98cff);
+        this.ambientPerformer(zone.start+520,455,'woman0-1',false);
+        this.ambientPerformer(zone.start+1320,470,'woman4-2',true);
         this.addBreakable(zone.start+560,585,'prop2-2','CHAMPAGNE BUCKET',2,22);
         this.addBreakable(zone.start+1270,575,'prop3-4','LIGHT RIG',3,34);
       }else if(index===2){
@@ -517,6 +519,8 @@ export class GameScene extends Phaser.Scene{
         this.decorSign(zone.start+1100,240,'PRIVATE BOOTHS',0xff8bc8);
         this.vipBooth(zone.start+620,575,0x7a173f);
         this.vipBooth(zone.start+1110,575,0x7b5b16);
+        this.ambientPerformer(zone.start+620,465,'woman5-1',false);
+        this.ambientPerformer(zone.start+1110,455,'woman7-2',true);
         this.mirrorPanel(zone.start+1420,300);
         this.addBreakable(zone.start+840,585,'prop1-4','TABLE CASH',1,42);
         this.addBreakable(zone.start+1320,585,'prop2-2','BOTTLE SERVICE',2,30);
@@ -524,6 +528,8 @@ export class GameScene extends Phaser.Scene{
         this.decorSign(zone.start+390,188,"OWNER'S BOOTH",0xff315e);
         this.decorSign(zone.start+1040,235,'STAFF • DRESSING ROOMS',0xff8bc8);
         this.vipBooth(zone.start+690,575,0x5d1026);
+        this.ambientPerformer(zone.start+690,455,'woman1-3',true);
+        this.ambientPerformer(zone.start+1060,465,'woman3-2',false);
         this.mirrorPanel(zone.start+1160,290);
         this.dressingDoor(zone.start+1450,300,'DRESSING ROOM');
         this.addBreakable(zone.start+820,580,'prop2-2','TOP-SHELF BOTTLES',3,45);
@@ -574,6 +580,13 @@ export class GameScene extends Phaser.Scene{
     const legB=this.add.rectangle(x+10,y+46,13,92,color,.36).setAngle(-6).setDepth(-2);
     const glow=this.add.circle(x,y-12,96,color,.045).setBlendMode(Phaser.BlendModes.ADD).setDepth(-4);
     this.levelObjects.push(head,body,legA,legB,glow);
+  }
+
+  ambientPerformer(x:number,y:number,key:string,flip:boolean){
+    const performer=this.add.image(x,y,key).setScale(.58).setFlipX(flip).setAlpha(.56).setDepth(Math.round(y)-120);
+    const glow=this.add.ellipse(x,y+55,80,18,0xff269c,.06).setDepth(Math.round(y)-122);
+    this.levelObjects.push(performer,glow);
+    this.tweens.add({targets:performer,y:y-5,angle:flip?1.4:-1.4,duration:1100+Phaser.Math.Between(0,350),yoyo:true,repeat:-1,ease:'Sine.easeInOut'});
   }
 
   vipBooth(x:number,y:number,color:number){
