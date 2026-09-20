@@ -1,151 +1,498 @@
 import Phaser from 'phaser';
-import {DIFFICULTIES,ENEMIES,EnemyKey,STAGES,UPGRADES} from './data';
+import {DIFFICULTIES,ENEMIES,EnemyKey,STAGES} from './data';
 import type {FilthyAudio} from './audio';
 import {recordClear,unlockAchievement,unlockGalleryEntry} from './progression';
 import type {CampaignReward} from './campaign';
 
-type Foe=Phaser.Physics.Arcade.Sprite&{kind:EnemyKey;hp:number;maxHp:number;damage:number;worth:number;speed:number;style:string;engage:number;nextAttack:number;specialAt:number;hitstunUntil:number;boss:boolean;dead:boolean;shadow?:Phaser.GameObjects.Ellipse;barBg?:Phaser.GameObjects.Rectangle;bar?:Phaser.GameObjects.Rectangle};
-type Loot=Phaser.Physics.Arcade.Sprite&{loot:string};
-type Shot=Phaser.Physics.Arcade.Sprite&{damage?:number};
 type DifficultyKey=keyof typeof DIFFICULTIES;
+type EnemyState='approach'|'telegraph'|'recover'|'stunned';
+type Foe=Phaser.Physics.Arcade.Sprite&{
+  kind:EnemyKey;hp:number;maxHp:number;damage:number;worth:number;speed:number;boss:boolean;dead:boolean;
+  ai:EnemyState;nextAttack:number;attackAt:number;recoverUntil:number;stunnedUntil:number;
+  slotX:number;slotY:number;shadow?:Phaser.GameObjects.Ellipse;barBg?:Phaser.GameObjects.Rectangle;bar?:Phaser.GameObjects.Rectangle;
+};
 type RunState={stage:number;wave:number;hp:number;maxHp:number;high:number;packets:number;cash:number;score:number;combo:number;kills:number;damageTaken:number;startedAt:number;upgrades:Set<string>;weapon:string;weaponHits:number};
-type Encounter={x:number;title:string;enemies:EnemyKey[];boss?:EnemyKey;hazard?:boolean};
-const WORLD_W=6400;
-const ROUTES:Encounter[][]=[
- [
-  {x:900,title:'FRONT DOOR SHAKEDOWN',enemies:['roxi','chad']},
-  {x:2200,title:'VIP CORRIDOR',enemies:['lexi','roxi','chad']},
-  {x:3650,title:'MAIN FLOOR MELTDOWN',enemies:['lola','lexi','roxi'],hazard:true},
-  {x:5250,title:'OWNER\'S BOOTH',enemies:['roxi'],boss:'chad',hazard:true}
- ],
- [
-  {x:850,title:'SERVICE LANE',enemies:['nyx','goblin']},
-  {x:2150,title:'BIN-FIRE PARLIAMENT',enemies:['viper','coin','goblin']},
-  {x:3600,title:'NEON UNDERPASS',enemies:['nyx','viper','coin'],hazard:true},
-  {x:5200,title:'DEAD-END SERMON',enemies:['viper'],boss:'goblin',hazard:true}
- ],
- [
-  {x:900,title:'CASINO FOYER',enemies:['candy','coin']},
-  {x:2250,title:'SLOTS OF REGRET',enemies:['suki','candy','coin']},
-  {x:3700,title:'HIGH-LIMIT LOUNGE',enemies:['bianca','suki','candy'],hazard:true},
-  {x:5300,title:'THE HOUSE EDGE',enemies:['bianca'],boss:'candy',hazard:true}
- ],
- [
-  {x:900,title:'TAXI RANK',enemies:['roxi','viper']},
-  {x:2250,title:'KEBAB QUEUE',enemies:['lola','suki','roxi']},
-  {x:3700,title:'GARLIC-SAUCE GAUNTLET',enemies:['viper','bianca','lola'],hazard:true},
-  {x:5300,title:'DAWN JUDGMENT',enemies:['bianca','roxi'],boss:'damo',hazard:true}
- ]
+type Encounter={x:number;title:string;enemies:EnemyKey[];boss?:EnemyKey};
+type AttackDef={duration:number;hitAt:number;rangeX:number;rangeY:number;damage:number;knock:number;lunge:number;frame:number};
+
+const WORLD_W=6200;
+const FLOOR_TOP=405;
+const FLOOR_BOTTOM=625;
+const PLAYER_SPEED=285;
+const ENCOUNTERS:Encounter[]=[
+  {x:980,title:'FRONT DOOR SHAKEDOWN',enemies:['lexi','roxi']},
+  {x:2280,title:'MAIN FLOOR',enemies:['lexi','lola','roxi']},
+  {x:3680,title:'VIP CORRIDOR',enemies:['lola','lexi','roxi']},
+  {x:5060,title:"OWNER'S BOOTH",enemies:['lexi'],boss:'chad'}
 ];
 
 export class GameScene extends Phaser.Scene{
- audio:FilthyAudio;auto=false;difficultyKey:DifficultyKey='cooked';player!:Phaser.Physics.Arcade.Sprite;playerShadow!:Phaser.GameObjects.Ellipse;highAura!:Phaser.GameObjects.Ellipse;ground!:Phaser.GameObjects.Rectangle;foes!:Phaser.Physics.Arcade.Group;loot!:Phaser.Physics.Arcade.Group;shots!:Phaser.Physics.Arcade.Group;background!:Phaser.GameObjects.TileSprite;midground!:Phaser.GameObjects.TileSprite;ambient!:Phaser.GameObjects.Rectangle;weaponView?:Phaser.GameObjects.Image;levelObjects:Phaser.GameObjects.GameObject[]=[];encounterIndex=0;encounterActive=false;encounterSpawning=false;leftGate?:Phaser.GameObjects.Rectangle;rightGate?:Phaser.GameObjects.Rectangle;exitMarker?:Phaser.GameObjects.Text;stageEndReady=false;
- cursors!:Phaser.Types.Input.Keyboard.CursorKeys;keys!:Record<string,Phaser.Input.Keyboard.Key>;touch:Record<string,boolean>={};state!:RunState;ready=false;running=false;paused=false;invulnerable=false;attacking=false;transition=false;spawning=false;nextPlayerHit=0;nextHudAt=0;stunnedUntil=0;lastAttack=0;comboTimer=0;damageBuff=1;packetTimer?:Phaser.Time.TimerEvent;hazardTimer?:Phaser.Time.TimerEvent;activeBoss?:Foe;lastGroundedAt=0;jumpQueuedUntil=0;bufferedAction='';bufferedUntil=0;nextDashAt=0;nextHitStopAt=0;attackChain=0;dashAttackUntil=0;campaignRouteLabel='MAIN ROUTE';campaignThreat=0;pendingCampaignReward:CampaignReward={};stageStartKills=0;stageStartDamage=0;stageStartScore=0;
- constructor(audio:FilthyAudio){super('Game');this.audio=audio}
- init(data:{auto?:boolean}){this.auto=!!data?.auto;this.running=false}
- preload(){
-  for(let r=0;r<4;r++)for(let i=1;i<=4;i++)this.load.image(`jack${r}-${i}`,`assets/characters/jack-row${r}/0${i}.png`);
-  for(let r=0;r<8;r++)for(let i=1;i<=4;i++)this.load.image(`woman${r}-${i}`,`assets/characters/woman-row${r}/0${i}.png`);
-  for(let r=0;r<4;r++)for(let i=1;i<=4;i++)this.load.image(`man${r}-${i}`,`assets/enemies/man-row${r}/0${i}.png`);
-  for(let r=0;r<4;r++)for(let i=1;i<=4;i++)this.load.image(`prop${r}-${i}`,`assets/props/row${r}/0${i}.png`);
-  this.load.image('bg-club','assets/backgrounds/pink-pigeon.webp');this.load.image('bg-alley','assets/backgrounds/alley.webp');this.load.image('bg-casino','assets/backgrounds/casino.webp');this.load.image('bg-kebab','assets/backgrounds/kebab.webp');
- }
- create(){
-  this.createAnimations();this.physics.world.setBounds(0,0,WORLD_W,720);this.cameras.main.setBounds(0,0,WORLD_W,720);this.cameras.main.setBackgroundColor('#080508');
-  this.background=this.add.tileSprite(0,0,WORLD_W,720,'bg-club').setOrigin(0).setScrollFactor(.12,1).setDepth(-30).setAlpha(.72);
-  this.midground=this.add.tileSprite(0,0,WORLD_W,720,'bg-club').setOrigin(0).setScrollFactor(.42,1).setDepth(-24).setAlpha(.24).setTint(0xff4ab5);
-  this.ambient=this.add.rectangle(640,360,1280,720,0xff1d9a,.07).setScrollFactor(0).setBlendMode(Phaser.BlendModes.ADD).setDepth(-15);this.tweens.add({targets:this.ambient,alpha:{from:.025,to:.11},duration:900,yoyo:true,repeat:-1});
-  this.add.rectangle(WORLD_W/2,690,WORLD_W,90,0x08040a,.72).setDepth(-2);this.add.rectangle(WORLD_W/2,650,WORLD_W,4,0xff299d,.5).setDepth(-1);
-  this.ground=this.add.rectangle(WORLD_W/2,672,WORLD_W,44,0,0);this.physics.add.existing(this.ground,true);
-  this.foes=this.physics.add.group();this.loot=this.physics.add.group();this.shots=this.physics.add.group({allowGravity:false});
-  this.player=this.physics.add.sprite(220,548,'jack0-1').setScale(.8).setCollideWorldBounds(true).setDepth(5).setActive(false).setVisible(false);this.setBody(this.player);this.player.play('jack-idle');
-  this.playerShadow=this.add.ellipse(this.player.x,647,112,22,0x000000,.45).setDepth(2).setVisible(false);this.highAura=this.add.ellipse(this.player.x,this.player.y,118,210,0x19ead8,0).setBlendMode(Phaser.BlendModes.ADD).setDepth(3).setVisible(false);
-  this.physics.add.collider(this.player,this.ground);this.physics.add.collider(this.foes,this.ground);this.physics.add.collider(this.foes,this.foes);this.physics.add.collider(this.loot,this.ground);this.physics.add.collider(this.shots,this.ground,s=>(s as Phaser.GameObjects.GameObject).destroy());this.physics.add.overlap(this.player,this.foes,(_,f)=>this.enemyContact(f as Foe));this.physics.add.overlap(this.player,this.loot,(_,l)=>this.collect(l as Loot));this.physics.add.overlap(this.player,this.shots,(_,s)=>this.projectileHit(s as Shot));
-  this.cameras.main.startFollow(this.player,true,.18,.16);this.cameras.main.setDeadzone(150,70);this.cameras.main.setFollowOffset(-110,0);
-  this.cursors=this.input.keyboard!.createCursorKeys();this.keys=this.input.keyboard!.addKeys('W,A,S,D,J,H,K,L,T,SHIFT,ESC') as Record<string,Phaser.Input.Keyboard.Key>;
-  const touch=(action:string,down:boolean)=>{this.touch[action]=down;if(down)this.action(action)},autopause=()=>{if(!this.paused&&this.player.active)this.togglePause()};this.game.events.on('touch',touch);this.game.events.on('autopause',autopause);this.events.once('shutdown',()=>{this.game.events.off('touch',touch);this.game.events.off('autopause',autopause)});
-  this.resetState();this.ready=true;if(this.auto)this.time.delayedCall(150,()=>this.startRun());
- }
- setDifficulty(key:string){if(key in DIFFICULTIES)this.difficultyKey=key as DifficultyKey}
- setCampaignRoute(label:string,threat:number,reward:CampaignReward={}){this.campaignRouteLabel=label;this.campaignThreat=Phaser.Math.Clamp(Math.round(threat),0,2);this.pendingCampaignReward={...reward}}
- applyCampaignReward(){const r=this.pendingCampaignReward;this.state.hp=Math.max(1,Math.min(this.state.maxHp,this.state.hp+(r.hp??0)));this.state.high=Math.max(0,Math.min(100,this.state.high+(r.high??0)));this.state.cash=Math.max(0,this.state.cash+(r.cash??0));this.state.packets=Math.max(0,this.state.packets+(r.packets??0));this.pendingCampaignReward={}}
- resetState(){this.state={stage:0,wave:0,hp:100,maxHp:100,high:0,packets:1,cash:0,score:0,combo:0,kills:0,damageTaken:0,startedAt:Date.now(),upgrades:new Set(),weapon:'',weaponHits:0}}
-  startRun(){if(!this.ready){this.auto=true;return}if(this.running)return;this.running=true;this.clearWorld();this.state.stage=0;this.state.wave=0;this.state.hp=this.state.maxHp;this.state.startedAt=Date.now();this.player.setActive(true).setVisible(true).setPosition(220,548).clearTint();this.playerShadow.setVisible(true);this.highAura.setVisible(true);this.physics.resume();this.paused=false;this.loadStage()}
-  loadStage(){const s=STAGES[this.state.stage],colours=[0xff1d9a,0x16d9ff,0xff9f12,0xffd88a];this.transition=true;this.game.events.emit('venueIntro',{act:s.act,name:s.name,line:s.intro});this.hazardTimer?.remove(false);this.clearLevelArt();this.encounterIndex=0;this.encounterActive=false;this.encounterSpawning=false;this.stageEndReady=false;this.state.wave=0;this.background.setTexture(s.background).setAlpha(.72);this.midground.setTexture(s.background).setAlpha(.24);this.ambient.setFillStyle(colours[this.state.stage],.07);this.player.setPosition(180,548).setVelocity(0);this.cameras.main.setScroll(0,0);this.applyCampaignReward();this.stageStartKills=this.state.kills;this.stageStartDamage=this.state.damageTaken;this.stageStartScore=this.state.score;this.restoreWeaponView();this.buildLevelArt();this.seedRouteLoot();this.cameras.main.flash(320,255,30,150);this.audio.stage(this.state.stage);this.emitHud();this.toast(`${this.campaignRouteLabel} • ${s.intro}`,1900);this.time.delayedCall(900,()=>{this.transition=false})}
- buildLevelArt(){const stage=this.state.stage,signs=[['VIP','PRIVATE','NO PHOTOS','BOTTLE SERVICE'],['2:17AM','NO SIGNAL','BAD IDEAS','KEEP MOVING'],['HOUSE EDGE','HIGH LIMIT','NO REFUNDS','CASH ONLY'],['5:41AM','GARLIC','LAST ORDERS','SUNRISE']][stage],tint=[0xff269c,0x19ead8,0xffc229,0xff7849][stage];for(let x=420,i=0;x<WORLD_W;x+=720,i++){const sign=this.add.text(x,Phaser.Math.Between(125,260),signs[i%signs.length],{fontFamily:'Black Ops One',fontSize:i%2?'26px':'34px',color:'#ffffff',stroke:'#090509',strokeThickness:7}).setDepth(-10).setAlpha(.72).setTint(tint);this.levelObjects.push(sign);const pole=this.add.rectangle(x+110,560,5,180,tint,.24).setDepth(-8);this.levelObjects.push(pole);if(i%2===0){const prop=this.add.image(x+260,620,`prop${stage%4}-${(i%4)+1}`).setScale(.22).setAlpha(.7).setDepth(1);this.levelObjects.push(prop)}}for(const e of ROUTES[stage]){const marker=this.add.text(e.x,105,e.title,{fontFamily:'Black Ops One',fontSize:'18px',color:'#ffd229',stroke:'#090509',strokeThickness:6}).setOrigin(.5).setAlpha(.38).setDepth(-6);this.levelObjects.push(marker)}}
- seedRouteLoot(){const layouts=[['drink','cash','bottle','kebab'],['cash','packet','drink','bottle'],['cash','drink','hammer','cash'],['kebab','cash','drink','hammer']][this.state.stage],positions=[1500,2920,4380,5900],map:Record<string,string>={packet:'prop1-1',drink:'prop1-2',kebab:'prop1-3',cash:'prop1-4',hammer:'prop2-1',bottle:'prop2-2'};layouts.forEach((loot,i)=>{const p=this.loot.create(positions[i],590,map[loot]) as Loot;p.loot=loot;p.setScale(.3).setDepth(3).setBounce(.2);const halo=this.add.circle(positions[i],610,34,0xffd229,.06).setStrokeStyle(2,0xffd229,.3).setDepth(1);this.levelObjects.push(halo)})}
- clearLevelArt(){this.levelObjects.forEach(o=>o.destroy());this.levelObjects=[];this.leftGate?.destroy();this.rightGate?.destroy();this.exitMarker?.destroy();this.leftGate=this.rightGate=undefined;this.exitMarker=undefined}
- updateRoute(){const route=ROUTES[this.state.stage];if(this.encounterActive){if(!this.encounterSpawning&&this.foes.countActive(true)===0)this.clearEncounter();return}if(this.stageEndReady){if(this.player.x>WORLD_W-260)this.stageClear();return}const next=route[this.encounterIndex];if(next&&this.player.x>=next.x)this.startEncounter(next)}
- startEncounter(enc:Encounter){this.encounterActive=true;this.encounterSpawning=true;this.state.wave=this.encounterIndex;this.toast(enc.title,900);this.game.events.emit('debauchery',{name:`FIGHT ZONE: ${enc.title}`});const leftX=Math.max(40,enc.x-350),rightX=Math.min(WORLD_W-40,enc.x+650);this.leftGate=this.makeGate(leftX,'BACK');this.rightGate=this.makeGate(rightX,'FIGHT');const roster=[...enc.enemies];if(this.difficultyKey==='unhinged')roster.push(STAGES[this.state.stage].roster[(this.encounterIndex+1)%STAGES[this.state.stage].roster.length]);if(this.difficultyKey==='feral')roster.push(STAGES[this.state.stage].roster[(this.encounterIndex+1)%STAGES[this.state.stage].roster.length],STAGES[this.state.stage].roster[(this.encounterIndex+2)%STAGES[this.state.stage].roster.length]);if(this.campaignThreat>=1)roster.push(STAGES[this.state.stage].roster[(this.encounterIndex+2)%STAGES[this.state.stage].roster.length]);if(this.campaignThreat>=2)roster.push(STAGES[this.state.stage].roster[(this.encounterIndex+3)%STAGES[this.state.stage].roster.length]);let slot=0;for(const kind of roster){const spawnSlot=slot++;this.time.delayedCall(spawnSlot*180,()=>this.spawnFoe(kind,false,enc.x+80+spawnSlot*105))}if(enc.boss)this.time.delayedCall(slot*210+180,()=>this.spawnFoe(enc.boss!,true,enc.x+360));this.time.delayedCall(slot*210+260,()=>{this.encounterSpawning=false});if(enc.hazard){const d=DIFFICULTIES[this.difficultyKey];this.hazardTimer=this.time.addEvent({delay:Math.round((4200-this.state.stage*350)*d.hazard),loop:true,callback:()=>{if(this.encounterActive&&!this.paused)this.spawnHazard()}})}this.emitHud()}
- makeGate(x:number,label:string){const gate=this.add.rectangle(x,535,22,250,0xff269c,.14).setStrokeStyle(3,0xffd229,.8).setDepth(12);this.physics.add.existing(gate,true);this.physics.add.collider(this.player,gate);const text=this.add.text(x,390,label,{fontFamily:'Black Ops One',fontSize:'12px',color:'#ffd229',stroke:'#000',strokeThickness:4}).setOrigin(.5).setDepth(13);this.levelObjects.push(text);return gate}
- clearEncounter(){this.encounterActive=false;this.hazardTimer?.remove(false);this.leftGate?.destroy();this.rightGate?.destroy();this.leftGate=this.rightGate=undefined;const enc=ROUTES[this.state.stage][this.encounterIndex];this.encounterIndex++;this.state.wave=this.encounterIndex;this.toast(`${enc.title} — CLEARED. MOVE RIGHT →`,1000);this.cameras.main.flash(110,255,210,40);this.game.events.emit('debauchery',{name:'AREA CLEARED • KEEP MOVING'});if(this.encounterIndex>=ROUTES[this.state.stage].length){this.stageEndReady=true;this.exitMarker=this.add.text(WORLD_W-330,500,'EXIT →',{fontFamily:'Black Ops One',fontSize:'34px',color:'#ffd229',stroke:'#ff269c',strokeThickness:5}).setDepth(20);this.tweens.add({targets:this.exitMarker,alpha:{from:.35,to:1},duration:450,yoyo:true,repeat:-1})}this.emitHud()}
-  spawnFoe(kind:EnemyKey,boss=false,spawnX?:number){const spec=ENEMIES[kind],diff=DIFFICULTIES[this.difficultyKey],row=Number(spec.sprite.replace(/\D/g,'')),prefix=spec.sprite.startsWith('woman')?'woman':'man',slot=this.foes.countActive(true);const x=Phaser.Math.Clamp(spawnX??(this.player.x+620+(slot%4)*110),120,WORLD_W-120);const scale=spec.scale*(boss?1.13:1),hp=Math.ceil(spec.hp*(boss?4:1)*diff.hp);const foe=this.foes.create(x,650-128*scale,`${prefix}${row}-1`) as Foe;Object.assign(foe,{kind,hp,maxHp:hp,damage:spec.damage*(boss?1.25:1)*diff.damage,worth:spec.worth*(boss?4:1)*diff.score,speed:spec.speed,style:spec.style,engage:64+(slot%4)*16,nextAttack:0,specialAt:this.time.now+3200,hitstunUntil:0,boss,dead:false});foe.setScale(scale).setDepth(4).setCollideWorldBounds(true).setFlipX(true);this.setBody(foe);foe.shadow=this.add.ellipse(foe.x,647,95*scale,18,0x000000,.38).setDepth(2);if(!boss){foe.barBg=this.add.rectangle(foe.x,foe.y-112*scale,54,7,0x140b15,.9).setStrokeStyle(1,0xffffff,.8).setDepth(8);foe.bar=this.add.rectangle(foe.x-25,foe.y-112*scale,50,3,0xff269c).setOrigin(0,.5).setDepth(9)}foe.play(`${prefix}${row}-walk`);if(boss){this.activeBoss=foe;const line=Phaser.Math.RND.pick(spec.lines);this.game.events.emit('bossIntro',{name:spec.name,line,image:`assets/${spec.sprite.startsWith('woman')?'characters':'enemies'}/${spec.sprite.startsWith('woman')?`woman-row${row}`:`man-row${row}`}/01.png`})}else if(Math.random()<.35)this.toast(Phaser.Math.RND.pick(spec.lines),850);this.emitHud()}
- update(time:number,delta:number){
-  if(!this.ready||!this.running)return;if(Phaser.Input.Keyboard.JustDown(this.keys.ESC)){this.togglePause();return}if(this.paused||this.transition||!this.player.active)return;
-  const body=this.player.body as Phaser.Physics.Arcade.Body,grounded=body.blocked.down,stunned=time<this.stunnedUntil;
-  if(grounded)this.lastGroundedAt=time;
-  const left=!stunned&&(this.cursors.left.isDown||this.keys.A.isDown||this.touch.left),right=!stunned&&(this.cursors.right.isDown||this.keys.D.isDown||this.touch.right),dir=(right?1:0)-(left?1:0),dt=Math.min(.05,delta/1000);
-  const approach=(value:number,target:number,step:number)=>value<target?Math.min(value+step,target):Math.max(value-step,target);
-  const topSpeed=315,accel=grounded?1900:1180,brake=grounded?2450:760,steer=this.attacking ? .42 : 1,target=dir*topSpeed*steer;
-  if(!stunned){
-    if(dir){body.setVelocityX(approach(body.velocity.x,target,accel*steer*dt));this.player.setFlipX(dir<0);if(grounded&&!this.attacking)this.player.play('jack-run',true)}
-    else if(this.attacking)body.setVelocityX(approach(body.velocity.x,0,650*dt));
-    else{body.setVelocityX(approach(body.velocity.x,0,brake*dt));if(grounded&&Math.abs(body.velocity.x)<20)this.player.play('jack-idle',true)}
+  audio:FilthyAudio;
+  auto=false;
+  difficultyKey:DifficultyKey='cooked';
+  player!:Phaser.Physics.Arcade.Sprite;
+  playerShadow!:Phaser.GameObjects.Ellipse;
+  highAura!:Phaser.GameObjects.Ellipse;
+  foes!:Phaser.Physics.Arcade.Group;
+  background!:Phaser.GameObjects.TileSprite;
+  midground!:Phaser.GameObjects.TileSprite;
+  floorGlow!:Phaser.GameObjects.Rectangle;
+
+  cursors!:Phaser.Types.Input.Keyboard.CursorKeys;
+  keys!:Record<string,Phaser.Input.Keyboard.Key>;
+  touch:Record<string,boolean>={};
+
+  state!:RunState;
+  ready=false;
+  running=false;
+  paused=false;
+  transition=false;
+  invulnerableUntil=0;
+  stunnedUntil=0;
+  nextHudAt=0;
+  nextPlayerHit=0;
+  activeBoss?:Foe;
+
+  encounterIndex=0;
+  encounterActive=false;
+  encounterSpawning=false;
+  leftGate?:Phaser.GameObjects.Rectangle;
+  rightGate?:Phaser.GameObjects.Rectangle;
+  levelObjects:Phaser.GameObjects.GameObject[]=[];
+
+  attack?:AttackDef;
+  attackStarted=0;
+  attackHit=false;
+  comboStep=0;
+  lastComboAttack=0;
+  queuedAttack='';
+  queuedUntil=0;
+  nextDashAt=0;
+  facing=1;
+
+  campaignRouteLabel='QUALITY SLICE';
+  campaignThreat=0;
+  pendingCampaignReward:CampaignReward={};
+  stageStartKills=0;
+  stageStartDamage=0;
+  stageStartScore=0;
+
+  constructor(audio:FilthyAudio){super('Game');this.audio=audio}
+  init(data:{auto?:boolean}){this.auto=!!data?.auto;this.running=false}
+
+  preload(){
+    for(let r=0;r<4;r++)for(let i=1;i<=4;i++)this.load.image(`jack${r}-${i}`,`assets/characters/jack-row${r}/0${i}.png`);
+    for(let r=0;r<8;r++)for(let i=1;i<=4;i++)this.load.image(`woman${r}-${i}`,`assets/characters/woman-row${r}/0${i}.png`);
+    for(let r=0;r<4;r++)for(let i=1;i<=4;i++)this.load.image(`man${r}-${i}`,`assets/enemies/man-row${r}/0${i}.png`);
+    for(let r=0;r<4;r++)for(let i=1;i<=4;i++)this.load.image(`prop${r}-${i}`,`assets/props/row${r}/0${i}.png`);
+    this.load.image('bg-club','assets/backgrounds/pink-pigeon.webp');
   }
-  if(Phaser.Input.Keyboard.JustDown(this.cursors.space)||Phaser.Input.Keyboard.JustDown(this.keys.W))this.jump();
-  if(!stunned&&this.jumpQueuedUntil>=time&&(grounded||time-this.lastGroundedAt<=120)){this.jumpQueuedUntil=0;body.setVelocityY(-545);if('vibrate' in navigator)navigator.vibrate?.(6)}
-  if(!stunned){if(Phaser.Input.Keyboard.JustDown(this.keys.J))this.action('hit');if(Phaser.Input.Keyboard.JustDown(this.keys.H))this.action('heavy');if(Phaser.Input.Keyboard.JustDown(this.keys.SHIFT))this.action('dash');if(Phaser.Input.Keyboard.JustDown(this.keys.K))this.action('packet');if(Phaser.Input.Keyboard.JustDown(this.keys.L))this.action('pigeon');if(Phaser.Input.Keyboard.JustDown(this.keys.T))this.action('rain')}
-  this.updateFoes(time);this.updateRoute();if(this.state.combo>0&&time>this.comboTimer){this.state.combo=0;this.emitHud()}if(this.weaponView){this.weaponView.setPosition(this.player.x+(this.player.flipX?-38:38),this.player.y+12).setFlipX(this.player.flipX)}
-  const air=Math.max(0,630-this.player.y),charge=this.state.high/100;this.playerShadow.setPosition(this.player.x,647).setScale(Math.max(.45,1-air/260),1).setAlpha(Math.max(.15,.45-air/500));this.highAura.setPosition(this.player.x,this.player.y+15).setAlpha(charge>.35?.05+charge*.17:0).setScale(.82+Math.sin(time/120)*.05+charge*.18);
-  if(time>=this.nextHudAt){this.nextHudAt=time+100;this.emitHud()}
- }
- canAct(){return this.ready&&this.running&&!this.paused&&!this.transition&&this.player.active&&this.time.now>=this.stunnedUntil}
- action(a:string){
-  if(a==='pause'){if(this.running&&this.player.active)this.togglePause();return}
-  if(!this.canAct())return;
-  if(a==='jump'){this.jump();return}
-  if(this.attacking&&(a==='hit'||a==='heavy'||a==='dash')){this.bufferedAction=a;this.bufferedUntil=this.time.now+240;return}
-  if(a==='hit')this.lightAttack();if(a==='heavy')this.heavyAttack();if(a==='dash')this.dash();if(a==='packet')this.usePacket();if(a==='pigeon')this.pigeon();if(a==='rain')this.makeItRain()
- }
- jump(){this.jumpQueuedUntil=this.time.now+135}
- finishAttack(){this.attacking=false;this.player.play('jack-idle');const next=this.bufferedUntil>=this.time.now?this.bufferedAction:'';this.bufferedAction='';this.bufferedUntil=0;if(next)this.time.delayedCall(0,()=>this.action(next))}
- lightAttack(){if(this.attacking||this.paused)return;const now=this.time.now,dashAttack=now<this.dashAttackUntil;this.attackChain=now-this.lastAttack<430?(this.attackChain%3)+1:1;this.lastAttack=now;this.attacking=true;const chain=dashAttack?3:this.attackChain,frames=[1,2,4],ranges=[116,132,168],baseDamage=[1,1.25,2],knock=[300,360,640],lunges=[125,155,235],hitDelay=[55,65,92],recovery=[145,160,225];this.player.setTexture(`jack2-${frames[chain-1]}`);this.player.setVelocityX((this.player.flipX?-1:1)*(dashAttack?290:lunges[chain-1]));this.time.delayedCall(hitDelay[chain-1],()=>{const bonus=(this.state.upgrades.has('double')?1:0)+(this.state.weapon?1:0)+(dashAttack?1:0);this.damageArc(ranges[chain-1]+(dashAttack?24:0),baseDamage[chain-1]+bonus,knock[chain-1]+(dashAttack?160:0));if(chain===3){this.cameras.main.shake(80,.006);this.cameras.main.zoomTo(1.035,75,'Quad.easeOut');this.time.delayedCall(110,()=>this.cameras.main.zoomTo(1,150,'Quad.easeIn'));this.game.events.emit('debauchery',{name:dashAttack?'DASH FINISHER':'THREE-PIECE COMBO'})}});this.time.delayedCall(recovery[chain-1],()=>this.finishAttack());this.audio.hit(chain===3);if(this.state.weapon&&--this.state.weaponHits<=0)this.breakWeapon()}
- heavyAttack(){if(this.attacking||this.paused)return;const moneyShot=this.state.high>=95;if(moneyShot){this.state.high-=45;this.toast('MONEY SHOT — MAXIMUM DEGENERACY',900);this.unlock('money','MONEY SHOT');this.game.events.emit('debauchery',{name:'MONEY SHOT: UNREASONABLE'});this.audio.special()}this.attacking=true;this.player.setTexture('jack2-3');this.player.setVelocityX(this.player.body!.velocity.x*.35);this.time.delayedCall(205,()=>{this.player.setTexture('jack2-4');this.damageArc(moneyShot?235:152,(this.state.upgrades.has('tradie')?6:3)+(this.state.weapon?2:0)+(moneyShot?4:0),moneyShot?840:650);this.cameras.main.shake(moneyShot?180:95,moneyShot?.018:.009);this.audio.hit(true);if(this.state.upgrades.has('filthy'))this.state.cash+=10});this.time.delayedCall(390,()=>this.finishAttack());if(this.state.weapon&&--this.state.weaponHits<=0)this.time.delayedCall(380,()=>this.breakWeapon())}
- damageArc(range:number,damage:number,knock:number){const dir=this.player.flipX?-1:1;let hits=0;this.foes.children.each(o=>{const f=o as Foe;if(f.active&&!f.dead&&Math.abs(f.y-this.player.y)<170){const dx=f.x-this.player.x;if(Math.sign(dx)===dir&&Math.abs(dx)<range){this.hitFoe(f,damage*this.damageBuff,dir*knock);hits++}}return true});if(hits){this.state.high=Math.min(100,this.state.high+5*hits);this.state.combo=Math.min(99,this.state.combo+hits);this.comboTimer=this.time.now+1100;if(this.state.combo===5)this.game.events.emit('debauchery',{name:'BAD DECISION STREAK'});if(this.state.combo===10){this.unlock('combo','DOUBLE-DIGIT DEGENERATE');this.game.events.emit('debauchery',{name:'THOT-O-METER: CRITICAL'})}if(this.state.combo===20)this.game.events.emit('debauchery',{name:'PUBLIC NUISANCE: ELITE'})}}
- hitFoe(f:Foe,damage:number,knock:number){if(f.dead)return;this.hitStop(f.boss?58:34);f.hitstunUntil=this.time.now+(f.boss?90:Math.min(260,120+damage*38));f.nextAttack=Math.max(f.nextAttack,f.hitstunUntil+180);f.hp-=damage;if(f.bar)f.bar.setScale(Math.max(0,f.hp/f.maxHp),1);f.setVelocity(knock,-145);f.setTintFill(0xffffff);this.time.delayedCall(70,()=>f.active&&f.clearTint());this.impact(f.x,f.y-60);if(f.boss)this.emitHud();if(f.hp<=0)this.defeat(f)}
- defeat(f:Foe){if(f.dead)return;f.dead=true;const spec=ENEMIES[f.kind],reward=Math.round(f.worth*(1+this.state.combo*.06));this.state.kills++;if(this.state.kills===1)this.unlock('first','CHERRY POPPED');if(spec.sprite.startsWith('woman'))this.unlockBaddie(f.kind);this.state.score+=reward;this.floatText(f.x,f.y-125,`+${reward}`,f.boss?'#ffd229':'#ffffff');this.state.cash+=this.state.upgrades.has('filthy')?20:10;this.state.high=Math.min(100,this.state.high+12);if(this.state.upgrades.has('shameless'))this.heal(3);this.blood(f.x,f.y);f.bar?.destroy();f.barBg?.destroy();f.shadow?.destroy();f.setTexture(`${spec.sprite}-4`);f.setVelocity((f.x<this.player.x?-1:1)*430,-330);f.setAngularVelocity(Phaser.Math.Between(-180,180));this.time.delayedCall(500,()=>{this.drop(f.x,f.y,f.boss);f.destroy()});if(f.boss){this.activeBoss=undefined;this.toast(`${spec.name}: ${Phaser.Math.RND.pick(spec.lines)}`,1000)}}
- updateFoes(time:number){this.foes.children.each(o=>{const f=o as Foe;if(!f.active||f.dead)return true;const dx=this.player.x-f.x,ad=Math.abs(dx),dir=Math.sign(dx)||1;if(time<f.hitstunUntil){f.setVelocityX(f.body!.velocity.x*.72);return true}let crowd=0;this.foes.children.each(other=>{if(other!==f&&(other as Foe).active&&Math.abs((other as Foe).x-f.x)<70)crowd+=Math.sign(f.x-(other as Foe).x)||1;return true});if(crowd)f.x+=crowd*.35;f.shadow?.setPosition(f.x,647);f.barBg?.setPosition(f.x,f.y-112*f.scaleY);f.bar?.setPosition(f.x-25,f.y-112*f.scaleY);f.setFlipX(dir<0);if(f.boss&&time>f.specialAt){f.specialAt=time+Phaser.Math.Between(3800,5200);this.bossSpecial(f);return true}if(f.style==='tease'&&ad<260&&time>f.nextAttack){f.nextAttack=time+1750;this.seduce(f);return true}if(f.style==='ranged'&&ad<440){f.setVelocityX(0);if(time>f.nextAttack){f.nextAttack=time+1500;f.setTexture(`${ENEMIES[f.kind].sprite}-3`).setTint(0x7fffff);this.time.delayedCall(120,()=>{if(f.active){f.clearTint();this.shoot(f)}})}}else if(f.style==='heavy'&&ad<320&&time>f.nextAttack){f.nextAttack=time+1700;f.setTexture(`${ENEMIES[f.kind].sprite}-4`).setTint(0xffcc33);this.time.delayedCall(260,()=>{if(f.active){f.clearTint();f.setVelocityX(dir*480)}})}else if(ad>f.engage){f.setVelocityX(dir*f.speed*(f.boss?1.15:1));f.play(`${ENEMIES[f.kind].sprite}-walk`,true)}else{f.setVelocityX(0);if(time>f.nextAttack){f.nextAttack=time+(f.boss?650:950);f.setTexture(`${ENEMIES[f.kind].sprite}-${f.style==='tease'?3:4}`);this.time.delayedCall(170,()=>{if(f.active&&Math.abs(this.player.x-f.x)<115)this.hurt(f.damage,f.x)})}}return true})}
- seduce(f:Foe){f.setVelocityX(0).setTexture(`${ENEMIES[f.kind].sprite}-3`);const ring=this.add.image(f.x,f.y-60,'prop3-1').setTint(0xff4eb5).setScale(.15).setDepth(10);this.tweens.add({targets:ring,scale:1.1,alpha:0,duration:520,onComplete:()=>ring.destroy()});this.time.delayedCall(260,()=>{if(f.active&&Math.abs(this.player.x-f.x)<285){this.stunnedUntil=this.time.now+720;this.hurt(f.damage*.55,f.x);this.unlock('redflags','WEAK TO RED FLAGS');this.toast(`${ENEMIES[f.kind].name}: EYES UP, FUCKBOY`,700)}})}
- bossSpecial(f:Foe){if(!f.active||f.dead)return;const kind=f.kind;if(kind==='chad'){this.toast('CHAD CALLED IN VIP REINFORCEMENTS',900);if(this.foes.countActive(true)<4)this.spawnFoe(Phaser.Math.RND.pick(['roxi','lexi','lola'] as EnemyKey[]));return}if(kind==='goblin'){this.toast('THE GOBLIN STOLE YOUR FUCKING BAG',900);if(this.state.packets>0)this.state.packets--;const smoke=this.add.image(f.x,f.y-50,'prop3-4').setScale(.25).setDepth(12);f.setPosition(Phaser.Math.Between(700,1350),540);this.tweens.add({targets:smoke,scale:1,alpha:0,duration:450,onComplete:()=>smoke.destroy()});return}if(kind==='candy'){this.toast('CANDY IS FEEDING ON YOUR WALLET',900);const stolen=Math.min(35,this.state.cash);this.state.cash-=stolen;f.hp=Math.min(f.maxHp,f.hp+Math.max(2,stolen/8));this.emitHud();for(let i=0;i<5;i++)this.spark(f.x+Phaser.Math.Between(-55,55),f.y-Phaser.Math.Between(20,120));return}if(kind==='damo'){this.toast('DAMO GROUND SLAM — MOVE, CUNT',900);const mark=this.add.ellipse(this.player.x,640,380,38,0xff3311,.25).setStrokeStyle(4,0xffcc22,.9).setDepth(1);this.tweens.add({targets:mark,scaleX:.25,alpha:.8,duration:520,onComplete:()=>{const x=mark.x;mark.destroy();this.cameras.main.shake(300,.025);if(Math.abs(this.player.x-x)<210)this.hurt(f.damage*1.4,f.x)}});return}}
- shoot(f:Foe){const dir=Math.sign(this.player.x-f.x)||1,s=this.shots.create(f.x+dir*40,f.y-55,'prop3-2') as Shot;s.damage=f.damage*.75;s.setScale(.3).setVelocityX(dir*390).setDepth(6);this.time.delayedCall(2500,()=>s.destroy())}
- projectileHit(s:Shot){const damage=s.damage??9,x=s.x;s.destroy();this.hurt(damage,x)}enemyContact(f:Foe){if(this.time.now>this.nextPlayerHit&&Math.abs(f.body!.velocity.x)>300)this.hurt(f.damage,f.x)}
- hurt(amount:number,sourceX:number){if(this.invulnerable||this.time.now<this.nextPlayerHit||!this.player.active)return;this.nextPlayerHit=this.time.now+650;this.state.damageTaken+=amount;this.state.hp=Math.max(0,this.state.hp-amount);this.state.high=Math.max(0,this.state.high-15);this.state.combo=0;this.player.setTexture('jack3-2').setVelocity((this.player.x<sourceX?-1:1)*430,-220).setTintFill(0xff3355);this.cameras.main.shake(160,.014);this.audio.hurt();this.time.delayedCall(170,()=>this.player.active&&this.player.clearTint());if(this.state.hp<=0)this.die()}
- dash(){if(this.invulnerable||this.attacking||this.time.now<this.nextDashAt)return;this.nextDashAt=this.time.now+360;const left=this.cursors.left.isDown||this.keys.A.isDown||this.touch.left,right=this.cursors.right.isDown||this.keys.D.isDown||this.touch.right,dir=left&&!right?-1:right&&!left?1:(this.player.flipX?-1:1);this.invulnerable=true;this.dashAttackUntil=this.time.now+330;this.audio.dash();this.player.setFlipX(dir<0).setAlpha(.5).setVelocityX(dir*735);this.player.setTexture('jack3-1');this.time.delayedCall(210,()=>{this.invulnerable=false;this.player.setAlpha(1);const body=this.player.body as Phaser.Physics.Arcade.Body;if(Math.abs(body.velocity.x)>335)body.setVelocityX(Math.sign(body.velocity.x)*335)})}
- usePacket(){if(this.state.packets<1){this.toast('NO BAGS LEFT, YOU ABSOLUTE SCAB',900);return}this.state.packets--;this.unlock('bag','BAG FOR LIFE');this.state.high=100;this.damageBuff=2;this.player.setTexture('jack3-3').setTint(0x33ffcc);if(this.state.upgrades.has('rat'))this.heal(10);if(this.packetTimer)this.packetTimer.remove(false);this.packetTimer=this.time.delayedCall(this.state.upgrades.has('rat')?9000:6000,()=>{this.damageBuff=1;this.state.high=30;this.player.clearTint()});this.audio.special();this.toast('FUCK YES. TEMPORARILY INVINCIBLE IN YOUR OWN MIND.',1300)}
- pigeon(){const cost=this.state.upgrades.has('pigeon')?30:50;if(this.state.high<cost){this.toast(`NEED ${cost} HIGH TO SUMMON THE BIRD`,800);return}this.state.high-=cost;this.unlock('pigeon','AIR SUPERIORITY');this.audio.special();this.toast('PIGEONHOLE AIR SUPPORT — SHIT FROM ABOVE',1000);const p=this.physics.add.sprite(this.player.x-520,250,'prop0-1').setScale(.55).setDepth(12).setVelocityX(980);p.play('pigeon-fly');this.foes.children.each((o,i)=>{const f=o as Foe;this.time.delayedCall(180+Number(i)*90,()=>f.active&&this.hitFoe(f,4,(f.x<this.player.x?-1:1)*450));return true});this.time.delayedCall(2300,()=>p.destroy())}
- makeItRain(){if(this.state.cash<50){this.toast('NEED $50 TO MAKE IT RAIN, BROKE CUNT',700);return}this.state.cash-=50;let charmed=0;for(let i=0;i<9;i++){const note=this.add.image(this.player.x+Phaser.Math.Between(-160,160),this.player.y-Phaser.Math.Between(90,240),'prop1-4').setScale(.12).setDepth(14).setAngle(Phaser.Math.Between(-40,40));this.tweens.add({targets:note,y:650,x:note.x+Phaser.Math.Between(-90,90),angle:note.angle+180,alpha:0,duration:900+Phaser.Math.Between(0,350),onComplete:()=>note.destroy()})}this.foes.children.each(o=>{const f=o as Foe;if(f.active&&!f.dead&&ENEMIES[f.kind].sprite.startsWith('woman')&&Math.abs(f.x-this.player.x)<430){charmed++;f.setVelocityX(0).setTint(0xffd229);f.nextAttack=this.time.now+2600;f.setTexture(`${ENEMIES[f.kind].sprite}-3`);this.time.delayedCall(800,()=>f.active&&f.clearTint())}return true});this.state.high=Math.min(100,this.state.high+10*charmed);this.state.score+=69*charmed;this.unlock('rain','MAKE IT RAIN');if(charmed>=2)this.game.events.emit('debauchery',{name:'ECONOMICALLY IRRESPONSIBLE'});this.toast(charmed?`$50 WELL WASTED — ${charmed} BADDIES DISTRACTED`:'YOU THREW $50 AT AN EMPTY ROOM',850)}
- drop(x:number,y:number,boss=false){if(!boss&&Math.random()>.6)return;const options=boss?['packet','kebab','hammer']:['packet','drink','cash','bottle','kebab'],loot=Phaser.Math.RND.pick(options);const map:Record<string,string>={packet:'prop1-1',drink:'prop1-2',kebab:'prop1-3',cash:'prop1-4',hammer:'prop2-1',bottle:'prop2-2'};const p=this.loot.create(x,y-40,map[loot]) as Loot;p.loot=loot;p.setScale(.32).setBounce(.5).setVelocity(Phaser.Math.Between(-80,80),-260).setDepth(3)}
- collect(p:Loot){if(!p.active)return;const type=p.loot;p.destroy();this.audio.pickup();if(type==='packet')this.state.packets++;if(type==='drink'){this.state.high=Math.min(100,this.state.high+25);this.heal(5)}if(type==='kebab')this.heal(30);if(type==='cash'){this.state.cash+=this.state.upgrades.has('filthy')?100:50;this.state.score+=69}if(type==='hammer'||type==='bottle')this.equip(type);this.toast(type==='kebab'?'GARLIC ARMOUR RESTORED 30 MEAT':type==='cash'?'FILTHY MONEY ACQUIRED':type==='packet'?'MYSTERY BAG SECURED':type==='drink'?'69 ENERGY: HEART PALPITATIONS ONLINE':`${type.toUpperCase()} EQUIPPED`,750)}
- equip(type:string){this.state.weapon=type;this.state.weaponHits=type==='hammer'?8:4;this.restoreWeaponView()}restoreWeaponView(){this.weaponView?.destroy();this.weaponView=this.state.weapon?this.add.image(this.player.x,this.player.y,this.state.weapon==='hammer'?'prop2-1':'prop2-2').setScale(.2).setDepth(7):undefined}breakWeapon(){this.state.weapon='';this.state.weaponHits=0;this.weaponView?.destroy();this.weaponView=undefined;this.toast('WEAPON FUCKED. USE YOUR HANDS.',600)}
- heal(n:number){this.state.hp=Math.min(this.state.maxHp,this.state.hp+n)}
- advanceWave(){/* authored route progression replaces random waves */}
-  stageClear(){if(this.state.stage>=STAGES.length-1){this.finish();return}this.physics.pause();const choices=Phaser.Utils.Array.Shuffle(UPGRADES.filter(u=>!this.state.upgrades.has(u.id))).slice(0,3),stageStats={score:this.state.score-this.stageStartScore,kills:this.state.kills-this.stageStartKills,damage:this.state.damageTaken-this.stageStartDamage,cash:this.state.cash};this.game.events.emit('upgrade',{stage:this.state.stage,choices,score:this.state.score,stageStats,choose:(id:string)=>{this.applyUpgrade(id);this.state.stage++;this.state.wave=0;this.state.hp=Math.min(this.state.maxHp,this.state.hp+30);this.clearWorld();this.physics.resume();this.loadStage()}})}
- applyUpgrade(id:string){this.state.upgrades.add(id);if(id==='double'){this.state.maxHp-=10;this.state.hp=Math.min(this.state.hp,this.state.maxHp)}}
- die(){this.running=false;this.paused=true;this.player.setActive(false);this.playerShadow.setVisible(false);this.highAura.setVisible(false);this.physics.pause();this.audio.hurt();this.toast('YOU DIED AS YOU LIVED: MAKING IT EVERYONE ELSE\'S PROBLEM',1600);this.time.delayedCall(1200,()=>this.game.events.emit('gameover',{score:this.state.score,stage:this.state.stage,kills:this.state.kills,damage:this.state.damageTaken,difficulty:DIFFICULTIES[this.difficultyKey].name,retry:()=>{this.scene.restart({auto:true})}}))}
- finish(){this.running=false;this.transition=true;this.physics.pause();this.unlock('sunrise','SUNRISE SURVIVOR');const best=recordClear(this.state.score),seconds=Math.round((Date.now()-this.state.startedAt)/1000),stageStats={score:this.state.score-this.stageStartScore,kills:this.state.kills-this.stageStartKills,damage:this.state.damageTaken-this.stageStartDamage,cash:this.state.cash};this.game.events.emit('ending',{score:this.state.score,cash:this.state.cash,best,kills:this.state.kills,damage:this.state.damageTaken,seconds,stageStats,difficulty:DIFFICULTIES[this.difficultyKey].name,retry:()=>this.scene.restart({auto:true})})}
- clearWorld(){this.hazardTimer?.remove(false);this.leftGate?.destroy();this.rightGate?.destroy();this.leftGate=this.rightGate=undefined;this.foes?.children.each(o=>{const f=o as Foe;f.bar?.destroy();f.barBg?.destroy();f.shadow?.destroy();return true});this.foes?.clear(true,true);this.loot?.clear(true,true);this.shots?.clear(true,true);this.activeBoss=undefined;this.weaponView?.destroy();this.weaponView=undefined}
- togglePause(){if(!this.player.active||this.paused)return;this.paused=true;this.game.events.emit('pause',{resume:()=>{if(!this.paused)return;this.paused=false;this.scene.resume();this.game.events.emit('closeModal');this.game.events.emit('resumed')}});this.scene.pause()}
- setBody(s:Phaser.Physics.Arcade.Sprite){s.setBodySize(58,165).setOffset(99,82)}
- spawnHazard(){const stage=this.state.stage;if(stage===0){this.toast('HAZARD: BOTTLE SERVICE FROM ABOVE',650);for(let i=0;i<5;i++)this.time.delayedCall(i*120,()=>this.fallingHazard('prop2-2',8))}else if(stage===1){const x=Phaser.Math.Clamp(this.player.x+Phaser.Math.Between(-220,220),120,1380);this.toast('LIVE PUDDLE — MOVE YOUR ARSE',650);const mark=this.add.rectangle(x,642,280,20,0x12e8ff,.22).setStrokeStyle(3,0x7effff,.9).setDepth(1);this.tweens.add({targets:mark,alpha:.8,scaleX:.35,duration:720,onComplete:()=>{const fx=this.add.image(x,620,'prop3-2').setScale(.25).setDepth(12);mark.destroy();this.tweens.add({targets:fx,scale:1.5,alpha:0,duration:430,onComplete:()=>fx.destroy()});if(Math.abs(this.player.x-x)<165)this.hurt(11,x)}})}else if(stage===2){this.toast('THE HOUSE IS COLLECTING INTEREST',650);for(let i=0;i<4;i++){const s=this.shots.create(1450,430+i*55,'prop3-3') as Shot;s.damage=9;s.setScale(.28).setVelocityX(-340-i*30).setDepth(8);this.time.delayedCall(4300,()=>s.destroy())}}else{this.toast('HOT GREASE RAIN — DAWN IS DISGUSTING',650);for(let i=0;i<7;i++)this.time.delayedCall(i*90,()=>this.fallingHazard('prop3-3',10))}}
- fallingHazard(key:string,damage:number){const s=this.shots.create(Phaser.Math.Clamp(this.player.x+Phaser.Math.Between(-360,360),60,1440),-60,key) as Shot;s.damage=damage;s.setScale(key==='prop2-2'?.2:.27).setAngularVelocity(Phaser.Math.Between(-220,220)).setVelocityY(Phaser.Math.Between(80,170)).setDepth(8);(s.body as Phaser.Physics.Arcade.Body).setAllowGravity(true);this.time.delayedCall(3200,()=>s.destroy())}
- spark(x:number,y:number){const fx=this.add.image(x,y,'prop3-3').setScale(.12).setDepth(13);this.tweens.add({targets:fx,scale:.55,alpha:0,angle:90,duration:420,onComplete:()=>fx.destroy()})}
- floatText(x:number,y:number,label:string,color:string){const t=this.add.text(x,y,label,{fontFamily:'Black Ops One',fontSize:'22px',color,stroke:'#090509',strokeThickness:5}).setOrigin(.5).setDepth(20);this.tweens.add({targets:t,y:y-70,alpha:0,scale:1.25,duration:650,ease:'Cubic.easeOut',onComplete:()=>t.destroy()})}
- unlock(id:string,name:string){if(unlockAchievement(id))this.game.events.emit('achievement',{name})}
- unlockBaddie(kind:EnemyKey){if(unlockGalleryEntry(kind))this.game.events.emit('achievement',{name:`${ENEMIES[kind].name} — AFTER-DARK DOSSIER`})}
- impact(x:number,y:number){const fx=this.add.image(x,y,'prop3-1').setScale(.24).setDepth(15);this.tweens.add({targets:fx,scale:.6,alpha:0,angle:90,duration:180,onComplete:()=>fx.destroy()})}
- blood(x:number,y:number){for(let i=0;i<12;i++){const c=this.add.circle(x,y-50,Phaser.Math.Between(2,7),0xd80b45).setDepth(3);this.tweens.add({targets:c,x:x+Phaser.Math.Between(-100,100),y:y+Phaser.Math.Between(-80,110),alpha:0,duration:Phaser.Math.Between(350,650),onComplete:()=>c.destroy()})}}
- hitStop(ms:number){if(this.time.now<this.nextHitStopAt)return;this.nextHitStopAt=this.time.now+70;const world=this.physics.world,old=world.timeScale;world.timeScale=3.2;this.time.delayedCall(ms,()=>{world.timeScale=old})}
- toast(text:string,duration=900){this.game.events.emit('toast',{text,duration})}
- emitHud(){const route=ROUTES[this.state.stage],next=route[Math.min(this.encounterIndex,route.length-1)];this.game.events.emit('hud',{...this.state,stageData:STAGES[this.state.stage],progress:{current:Math.min(this.encounterIndex+1,route.length),total:route.length,label:this.encounterActive?next?.title:(this.stageEndReady?'EXIT':'ADVANCE'),distance:Math.max(0,Math.min(1,this.player.x/WORLD_W)),route:this.campaignRouteLabel},boss:this.activeBoss?{name:ENEMIES[this.activeBoss.kind].name,hp:this.activeBoss.hp,max:this.activeBoss.maxHp}:null})}
- createAnimations(){const add=(key:string,frames:string[],rate:number)=>{if(!this.anims.exists(key))this.anims.create({key,frames:frames.map(k=>({key:k})),frameRate:rate,repeat:-1})};add('jack-idle',[1,2,3,4].map(i=>`jack0-${i}`),3);add('jack-run',[1,2,3,4].map(i=>`jack1-${i}`),9);for(let r=0;r<8;r++)add(`woman${r}-walk`,[1,2].map(i=>`woman${r}-${i}`),5);for(let r=0;r<4;r++)add(`man${r}-walk`,[1,2].map(i=>`man${r}-${i}`),5);add('pigeon-fly',[1,2,3,4].map(i=>`prop0-${i}`),10)}
+
+  create(){
+    this.physics.world.gravity.y=0;
+    this.physics.world.setBounds(0,FLOOR_TOP,WORLD_W,FLOOR_BOTTOM-FLOOR_TOP);
+    this.cameras.main.setBounds(0,0,WORLD_W,720).setBackgroundColor('#090509');
+
+    this.background=this.add.tileSprite(0,0,WORLD_W,720,'bg-club').setOrigin(0).setScrollFactor(.08,1).setDepth(-30).setAlpha(.78);
+    this.midground=this.add.tileSprite(0,0,WORLD_W,720,'bg-club').setOrigin(0).setScrollFactor(.36,1).setDepth(-24).setAlpha(.2).setTint(0xff44aa);
+    this.floorGlow=this.add.rectangle(WORLD_W/2,615,WORLD_W,220,0x120713,.72).setDepth(-8);
+    this.add.rectangle(WORLD_W/2,FLOOR_TOP-4,WORLD_W,3,0xff269c,.35).setDepth(-7);
+    this.add.rectangle(WORLD_W/2,FLOOR_BOTTOM+8,WORLD_W,5,0x19ead8,.25).setDepth(-7);
+
+    this.foes=this.physics.add.group({allowGravity:false});
+    this.player=this.physics.add.sprite(220,540,'jack0-1').setScale(.78).setDepth(540).setCollideWorldBounds(true).setActive(false).setVisible(false);
+    this.configureBody(this.player,62,92);
+    this.playerShadow=this.add.ellipse(220,600,92,22,0x000000,.46).setDepth(1).setVisible(false);
+    this.highAura=this.add.ellipse(220,540,116,184,0x19ead8,0).setBlendMode(Phaser.BlendModes.ADD).setDepth(2).setVisible(false);
+
+    this.physics.add.collider(this.foes,this.foes);
+    this.physics.add.overlap(this.player,this.foes,(_,foe)=>this.contact(foe as Foe));
+
+    this.cameras.main.startFollow(this.player,true,.12,.18);
+    this.cameras.main.setDeadzone(170,90);
+    this.cameras.main.setFollowOffset(-125,0);
+
+    this.cursors=this.input.keyboard!.createCursorKeys();
+    this.keys=this.input.keyboard!.addKeys('W,A,S,D,J,H,SHIFT,ESC') as Record<string,Phaser.Input.Keyboard.Key>;
+    const touch=(action:string,down:boolean)=>{this.touch[action]=down;if(down)this.action(action)};
+    const autopause=()=>{if(!this.paused&&this.player.active)this.togglePause()};
+    this.game.events.on('touch',touch);this.game.events.on('autopause',autopause);
+    this.events.once('shutdown',()=>{this.game.events.off('touch',touch);this.game.events.off('autopause',autopause)});
+
+    this.buildLevelArt();
+    this.resetState();
+    this.ready=true;
+    if(this.auto)this.time.delayedCall(100,()=>this.startRun());
+  }
+
+  setDifficulty(key:string){if(key in DIFFICULTIES)this.difficultyKey=key as DifficultyKey}
+  setCampaignRoute(label:string,threat:number,reward:CampaignReward={}){this.campaignRouteLabel=label;this.campaignThreat=Math.max(0,Math.min(2,Math.round(threat)));this.pendingCampaignReward={...reward}}
+
+  resetState(){
+    this.state={stage:0,wave:0,hp:100,maxHp:100,high:0,packets:0,cash:0,score:0,combo:0,kills:0,damageTaken:0,startedAt:Date.now(),upgrades:new Set(),weapon:'FISTS',weaponHits:0};
+  }
+
+  startRun(){
+    if(!this.ready){this.auto=true;return}
+    if(this.running)return;
+    this.running=true;this.paused=false;this.transition=false;
+    this.encounterIndex=0;this.encounterActive=false;this.encounterSpawning=false;
+    this.player.setActive(true).setVisible(true).setPosition(220,535).setVelocity(0).setAlpha(1).clearTint();
+    this.playerShadow.setVisible(true);this.highAura.setVisible(true);
+    this.applyCampaignReward();
+    this.stageStartKills=this.state.kills;this.stageStartDamage=this.state.damageTaken;this.stageStartScore=this.state.score;
+    this.physics.resume();this.cameras.main.setScroll(0,0);
+    this.game.events.emit('venueIntro',{act:'QUALITY SLICE',name:'THE PINK PIGEON',line:'BELT-SCROLL COMBAT REBUILD • READABLE, FAIR, RESPONSIVE'});
+    this.audio.stage(0);this.emitHud();
+  }
+
+  applyCampaignReward(){
+    const r=this.pendingCampaignReward;
+    this.state.hp=Math.max(1,Math.min(this.state.maxHp,this.state.hp+(r.hp??0)));
+    this.state.high=Math.max(0,Math.min(100,this.state.high+(r.high??0)));
+    this.state.cash=Math.max(0,this.state.cash+(r.cash??0));
+    this.pendingCampaignReward={};
+  }
+
+  update(time:number,delta:number){
+    if(!this.ready||!this.running)return;
+    if(Phaser.Input.Keyboard.JustDown(this.keys.ESC)){this.togglePause();return}
+    if(this.paused||this.transition||!this.player.active)return;
+
+    this.updatePlayer(time,delta);
+    this.updateAttack(time);
+    this.updateEnemies(time,delta);
+    this.updateEncounter();
+    this.updatePresentation(time);
+
+    if(this.state.combo>0&&time>this.lastComboAttack+1250){this.state.combo=0}
+    if(time>=this.nextHudAt){this.nextHudAt=time+90;this.emitHud()}
+  }
+
+  updatePlayer(time:number,delta:number){
+    const stunned=time<this.stunnedUntil;
+    const left=!stunned&&(this.cursors.left.isDown||this.keys.A.isDown||this.touch.left);
+    const right=!stunned&&(this.cursors.right.isDown||this.keys.D.isDown||this.touch.right);
+    const up=!stunned&&(this.cursors.up.isDown||this.keys.W.isDown||this.touch.up);
+    const down=!stunned&&(this.cursors.down.isDown||this.keys.S.isDown||this.touch.down);
+    let x=(right?1:0)-(left?1:0),y=(down?1:0)-(up?1:0);
+    if(x||y){const len=Math.hypot(x,y)||1;x/=len;y/=len}
+    const dt=Math.min(.05,delta/1000),body=this.player.body as Phaser.Physics.Arcade.Body;
+    const attacking=!!this.attack;
+    const speed=PLAYER_SPEED*(attacking?.38:1);
+    const approach=(value:number,target:number,step:number)=>value<target?Math.min(value+step,target):Math.max(value-step,target);
+    if(time>=this.invulnerableUntil){
+      body.setVelocityX(approach(body.velocity.x,x*speed,(x?2200:3000)*dt));
+      body.setVelocityY(approach(body.velocity.y,y*speed*.72,(y?1800:2600)*dt));
+    }
+    if(x!==0){this.facing=x>0?1:-1;this.player.setFlipX(this.facing<0)}
+    if(!attacking&&time>=this.stunnedUntil){
+      if(Math.abs(body.velocity.x)>20||Math.abs(body.velocity.y)>18)this.player.play('jack-run',true);
+      else this.player.play('jack-idle',true);
+    }
+    this.player.y=Phaser.Math.Clamp(this.player.y,FLOOR_TOP+42,FLOOR_BOTTOM-12);
+    this.player.setDepth(Math.round(this.player.y));
+    if(Phaser.Input.Keyboard.JustDown(this.keys.J))this.action('hit');
+    if(Phaser.Input.Keyboard.JustDown(this.keys.H))this.action('heavy');
+    if(Phaser.Input.Keyboard.JustDown(this.keys.SHIFT))this.action('dash');
+  }
+
+  action(action:string){
+    if(action==='pause'){this.togglePause();return}
+    if(!this.running||this.paused||this.transition||this.time.now<this.stunnedUntil)return;
+    if(action==='jump'||action==='up'||action==='down'||action==='left'||action==='right')return;
+    if(this.attack&&(action==='hit'||action==='heavy')){this.queuedAttack=action;this.queuedUntil=this.time.now+210;return}
+    if(action==='hit')this.lightAttack();
+    if(action==='heavy')this.heavyAttack();
+    if(action==='dash')this.dash();
+  }
+
+  lightAttack(){
+    if(this.attack)return;
+    const now=this.time.now;
+    this.comboStep=now-this.lastComboAttack<430?(this.comboStep%3)+1:1;
+    this.lastComboAttack=now;
+    const defs:AttackDef[]=[
+      {duration:165,hitAt:55,rangeX:112,rangeY:66,damage:1,knock:135,lunge:72,frame:1},
+      {duration:180,hitAt:62,rangeX:124,rangeY:70,damage:1.25,knock:170,lunge:82,frame:2},
+      {duration:250,hitAt:88,rangeX:154,rangeY:78,damage:2.2,knock:330,lunge:120,frame:4}
+    ];
+    this.startAttack(defs[this.comboStep-1]);
+  }
+
+  heavyAttack(){
+    if(this.attack)return;
+    const money=this.state.high>=100;
+    if(money){this.state.high=45;this.game.events.emit('debauchery',{name:'MONEY SHOT'});this.audio.special()}
+    this.startAttack({duration:money?410:360,hitAt:money?190:165,rangeX:money?220:172,rangeY:money?100:86,damage:money?6.5:3.4,knock:money?620:430,lunge:money?130:95,frame:3});
+  }
+
+  startAttack(def:AttackDef){
+    this.attack=def;this.attackStarted=this.time.now;this.attackHit=false;
+    this.player.setTexture(`jack2-${def.frame}`);
+    this.player.setVelocityX(this.facing*def.lunge);
+    this.player.setVelocityY(0);
+  }
+
+  updateAttack(time:number){
+    if(!this.attack)return;
+    const elapsed=time-this.attackStarted;
+    if(!this.attackHit&&elapsed>=this.attack.hitAt){
+      this.attackHit=true;
+      const hits=this.strike(this.attack);
+      if(hits&&this.attack.damage>=2){this.cameras.main.shake(70,.0045);this.hitStop(34)}
+    }
+    if(elapsed>=this.attack.duration){
+      this.attack=undefined;this.player.play('jack-idle',true);
+      const queued=this.queuedUntil>=time?this.queuedAttack:'';
+      this.queuedAttack='';this.queuedUntil=0;
+      if(queued)this.time.delayedCall(0,()=>this.action(queued));
+    }
+  }
+
+  strike(def:AttackDef){
+    let hits=0;
+    this.foes.children.each(obj=>{
+      const foe=obj as Foe;
+      if(!foe.active||foe.dead)return true;
+      const dx=foe.x-this.player.x,dy=Math.abs(foe.y-this.player.y);
+      if(Math.sign(dx||this.facing)===this.facing&&Math.abs(dx)<=def.rangeX&&dy<=def.rangeY){
+        this.hitFoe(foe,def.damage,this.facing*def.knock);hits++;
+      }
+      return true;
+    });
+    if(hits){
+      this.state.combo=Math.min(99,this.state.combo+hits);
+      this.state.high=Math.min(100,this.state.high+5*hits);
+      this.lastComboAttack=this.time.now;
+      if(this.comboStep===3)this.game.events.emit('debauchery',{name:'THREE-PIECE FINISHER'});
+    }
+    return hits;
+  }
+
+  dash(){
+    const now=this.time.now;if(now<this.nextDashAt)return;
+    this.nextDashAt=now+520;this.invulnerableUntil=now+210;
+    const left=this.cursors.left.isDown||this.keys.A.isDown||this.touch.left;
+    const right=this.cursors.right.isDown||this.keys.D.isDown||this.touch.right;
+    const up=this.cursors.up.isDown||this.keys.W.isDown||this.touch.up;
+    const down=this.cursors.down.isDown||this.keys.S.isDown||this.touch.down;
+    let x=(right?1:0)-(left?1:0),y=(down?1:0)-(up?1:0);
+    if(!x&&!y)x=this.facing;
+    const len=Math.hypot(x,y)||1;x/=len;y/=len;
+    this.facing=x===0?this.facing:(x>0?1:-1);this.player.setFlipX(this.facing<0);
+    this.player.setAlpha(.48).setVelocity(x*560,y*370).setTexture('jack3-1');
+    this.audio.dash();
+    this.time.delayedCall(210,()=>{if(!this.player.active)return;this.player.setAlpha(1);this.player.setVelocity(this.player.body!.velocity.x*.35,this.player.body!.velocity.y*.35)});
+  }
+
+  updateEnemies(time:number,delta:number){
+    const dt=Math.min(.05,delta/1000);
+    this.foes.children.each(obj=>{
+      const foe=obj as Foe;if(!foe.active||foe.dead)return true;
+      foe.setDepth(Math.round(foe.y));foe.shadow?.setPosition(foe.x,foe.y+62);
+      foe.barBg?.setPosition(foe.x,foe.y-94);foe.bar?.setPosition(foe.x-25,foe.y-94);
+
+      if(time<foe.stunnedUntil){foe.ai='stunned';foe.setVelocity(foe.body!.velocity.x*.78,foe.body!.velocity.y*.78);return true}
+      if(foe.ai==='stunned')foe.ai='approach';
+
+      const dx=this.player.x-foe.x,dy=this.player.y-foe.y,adX=Math.abs(dx),adY=Math.abs(dy);
+      foe.setFlipX(dx<0);
+
+      if(foe.ai==='telegraph'){
+        foe.setVelocity(0);
+        if(time>=foe.attackAt){
+          foe.clearTint();
+          if(adX<112&&adY<70)this.hurt(foe.damage,foe.x);
+          foe.setVelocityX(Math.sign(dx||1)*140);
+          foe.ai='recover';foe.recoverUntil=time+(foe.boss?480:620);
+        }
+        return true;
+      }
+      if(foe.ai==='recover'){
+        foe.setVelocity(foe.body!.velocity.x*.84,foe.body!.velocity.y*.84);
+        if(time>=foe.recoverUntil){foe.ai='approach';foe.nextAttack=time+(foe.boss?550:900)}
+        return true;
+      }
+
+      const desiredX=this.player.x+foe.slotX,desiredY=Phaser.Math.Clamp(this.player.y+foe.slotY,FLOOR_TOP+50,FLOOR_BOTTOM-20);
+      const sx=desiredX-foe.x,sy=desiredY-foe.y;
+      const close=adX<105&&adY<62;
+      if(close&&time>=foe.nextAttack){
+        foe.ai='telegraph';foe.attackAt=time+(foe.boss?300:390);
+        foe.setTint(foe.boss?0xff4d87:0xffcf4d);
+        foe.setTexture(`${ENEMIES[foe.kind].sprite}-3`);
+        return true;
+      }
+      const len=Math.hypot(sx,sy)||1;
+      const speed=foe.speed*(foe.boss?1.05:1);
+      foe.setVelocity(sx/len*speed,sy/len*speed*.74);
+      foe.play(`${ENEMIES[foe.kind].sprite}-walk`,true);
+      foe.x+=Math.sign(sx)*Math.min(0.35,Math.abs(sx)*dt*.03);
+      return true;
+    });
+  }
+
+  hitFoe(foe:Foe,damage:number,knock:number){
+    if(foe.dead)return;
+    foe.hp-=damage;foe.ai='stunned';foe.stunnedUntil=this.time.now+(foe.boss?110:Math.min(330,160+damage*34));foe.nextAttack=foe.stunnedUntil+350;
+    foe.setVelocity(knock,Phaser.Math.Between(-35,35)).setTintFill(0xffffff);
+    this.time.delayedCall(60,()=>foe.active&&foe.clearTint());
+    if(foe.bar)foe.bar.setScale(Math.max(0,foe.hp/foe.maxHp),1);
+    this.impact(foe.x,foe.y-35);this.audio.hit(damage>=2);
+    if(foe.boss)this.emitHud();
+    if(foe.hp<=0)this.defeat(foe);
+  }
+
+  contact(foe:Foe){
+    if(foe.dead||this.time.now<this.nextPlayerHit||this.time.now<this.invulnerableUntil)return;
+    if(foe.ai==='recover'&&Math.abs(foe.body!.velocity.x)>100)this.hurt(foe.damage*.6,foe.x);
+  }
+
+  hurt(amount:number,sourceX:number){
+    const now=this.time.now;
+    if(now<this.nextPlayerHit||now<this.invulnerableUntil)return;
+    this.nextPlayerHit=now+760;this.invulnerableUntil=now+620;this.stunnedUntil=now+260;
+    this.state.hp=Math.max(0,this.state.hp-amount);this.state.damageTaken+=amount;this.state.high=Math.max(0,this.state.high-12);this.state.combo=0;
+    this.player.setTintFill(0xff355c).setVelocity((this.player.x<sourceX?-1:1)*250,0);
+    this.cameras.main.shake(95,.007);this.audio.hurt();
+    this.time.delayedCall(95,()=>this.player.active&&this.player.clearTint());
+    if(this.state.hp<=0)this.die();
+  }
+
+  spawnFoe(kind:EnemyKey,boss=false,x?:number,y?:number,slot=0){
+    const spec=ENEMIES[kind],diff=DIFFICULTIES[this.difficultyKey];
+    const row=Number(spec.sprite.replace(/\D/g,'')),prefix=spec.sprite.startsWith('woman')?'woman':'man';
+    const hp=Math.ceil(spec.hp*(boss?3.2:1)*diff.hp),scale=spec.scale*(boss?1.12:1);
+    const foe=this.foes.create(x??this.player.x+500,y??520,`${prefix}${row}-1`) as Foe;
+    Object.assign(foe,{kind,hp,maxHp:hp,damage:spec.damage*(boss?1.12:1)*diff.damage,worth:spec.worth*(boss?4:1),speed:Phaser.Math.Clamp(spec.speed+25,105,155),boss,dead:false,ai:'approach' as EnemyState,nextAttack:this.time.now+900+slot*220,attackAt:0,recoverUntil:0,stunnedUntil:0,slotX:(slot%2===0?1:-1)*(80+Math.floor(slot/2)*42),slotY:(slot%3-1)*42});
+    foe.setScale(scale).setCollideWorldBounds(true).setDepth(Math.round(foe.y));
+    this.configureBody(foe,58,88);
+    foe.shadow=this.add.ellipse(foe.x,foe.y+62,82*scale,18,0x000000,.42).setDepth(1);
+    foe.barBg=this.add.rectangle(foe.x,foe.y-94,54,7,0x130914,.92).setStrokeStyle(1,0xffffff,.65).setDepth(900);
+    foe.bar=this.add.rectangle(foe.x-25,foe.y-94,50,3,boss?0xffd229:0xff269c).setOrigin(0,.5).setDepth(901);
+    foe.play(`${prefix}${row}-walk`);
+    if(boss){
+      this.activeBoss=foe;
+      this.game.events.emit('bossIntro',{name:spec.name,line:'YOU MADE IT TO THE BOOTH. BAD NEWS: SO DID I.',image:`assets/enemies/man-row${row}/01.png`});
+    }
+    return foe;
+  }
+
+  updateEncounter(){
+    if(this.encounterActive){
+      if(!this.encounterSpawning&&this.foes.countActive(true)===0)this.clearEncounter();
+      return;
+    }
+    if(this.encounterIndex>=ENCOUNTERS.length){
+      if(this.player.x>WORLD_W-360)this.finish();
+      return;
+    }
+    const next=ENCOUNTERS[this.encounterIndex];
+    if(this.player.x>=next.x)this.startEncounter(next);
+  }
+
+  startEncounter(enc:Encounter){
+    this.encounterActive=true;this.encounterSpawning=true;this.state.wave=this.encounterIndex;
+    this.game.events.emit('debauchery',{name:enc.title});this.toast(`${enc.title} • READ THE TELEGRAPHS`,900);
+    this.makeGates(Math.max(120,enc.x-300),Math.min(WORLD_W-120,enc.x+720));
+    let slot=0;
+    const roster=[...enc.enemies];
+    const maxEnemies=this.difficultyKey==='feral'?Math.min(4,roster.length):Math.min(3,roster.length);
+    for(const kind of roster.slice(0,maxEnemies)){
+      const s=slot++;this.time.delayedCall(s*220,()=>this.spawnFoe(kind,false,enc.x+260+s*95,495+(s%3)*45,s));
+    }
+    if(enc.boss){const s=slot++;this.time.delayedCall(s*250,()=>this.spawnFoe(enc.boss!,true,enc.x+440,520,s))}
+    this.time.delayedCall(slot*250+100,()=>{this.encounterSpawning=false});
+    this.emitHud();
+  }
+
+  makeGates(left:number,right:number){
+    this.leftGate=this.add.rectangle(left,515,18,235,0xff269c,.16).setStrokeStyle(2,0xffd229,.9).setDepth(950);
+    this.rightGate=this.add.rectangle(right,515,18,235,0xff269c,.16).setStrokeStyle(2,0xffd229,.9).setDepth(950);
+    this.physics.add.existing(this.leftGate,true);this.physics.add.existing(this.rightGate,true);
+    this.physics.add.collider(this.player,this.leftGate);this.physics.add.collider(this.player,this.rightGate);
+    this.levelObjects.push(this.add.text(left,382,'FIGHT',{fontFamily:'Black Ops One',fontSize:'11px',color:'#ffd229',stroke:'#000',strokeThickness:4}).setOrigin(.5).setDepth(951));
+    this.levelObjects.push(this.add.text(right,382,'FIGHT',{fontFamily:'Black Ops One',fontSize:'11px',color:'#ffd229',stroke:'#000',strokeThickness:4}).setOrigin(.5).setDepth(951));
+  }
+
+  clearEncounter(){
+    const enc=ENCOUNTERS[this.encounterIndex];
+    this.encounterActive=false;this.leftGate?.destroy();this.rightGate?.destroy();this.leftGate=this.rightGate=undefined;
+    this.encounterIndex++;this.state.wave=this.encounterIndex;this.activeBoss=undefined;
+    this.state.hp=Math.min(this.state.maxHp,this.state.hp+6);
+    this.toast(`${enc.title} CLEARED • MOVE RIGHT →`,1000);this.cameras.main.flash(100,255,210,40);
+    if(this.encounterIndex>=ENCOUNTERS.length){
+      const exit=this.add.text(WORLD_W-440,520,'EXIT →',{fontFamily:'Black Ops One',fontSize:'42px',color:'#ffd229',stroke:'#ff269c',strokeThickness:6}).setDepth(900);
+      this.levelObjects.push(exit);this.tweens.add({targets:exit,alpha:{from:.35,to:1},duration:430,yoyo:true,repeat:-1});
+    }
+    this.emitHud();
+  }
+
+  defeat(foe:Foe){
+    if(foe.dead)return;foe.dead=true;
+    const spec=ENEMIES[foe.kind];this.state.kills++;this.state.score+=Math.round(foe.worth*(1+this.state.combo*.05));this.state.cash+=10;this.state.high=Math.min(100,this.state.high+8);
+    if(spec.sprite.startsWith('woman')&&unlockGalleryEntry(foe.kind))this.game.events.emit('achievement',{name:`${spec.name} — DOSSIER`});
+    foe.bar?.destroy();foe.barBg?.destroy();foe.shadow?.destroy();
+    foe.setVelocity((foe.x<this.player.x?-1:1)*260,Phaser.Math.Between(-80,80)).setAngularVelocity(Phaser.Math.Between(-120,120)).setTexture(`${spec.sprite}-4`);
+    this.time.delayedCall(380,()=>foe.destroy());
+  }
+
+  updatePresentation(time:number){
+    this.playerShadow.setPosition(this.player.x,this.player.y+62).setDepth(Math.max(1,Math.round(this.player.y)-2));
+    this.highAura.setPosition(this.player.x,this.player.y).setDepth(Math.max(2,Math.round(this.player.y)-1)).setAlpha(this.state.high>=60?.05+this.state.high/600:0).setScale(.92+Math.sin(time/150)*.035);
+  }
+
+  buildLevelArt(){
+    const signs=['NO PHOTOS','VIP','TIPS FIRST','BAD IDEAS','PRIVATE','BOTTLE SERVICE','STAFF ONLY'];
+    for(let x=360,i=0;x<WORLD_W;x+=500,i++){
+      const sign=this.add.text(x,Phaser.Math.Between(120,250),signs[i%signs.length],{fontFamily:'Black Ops One',fontSize:i%2?'22px':'30px',color:i%3?'#ff70bd':'#ffd229',stroke:'#090509',strokeThickness:7}).setDepth(-10).setAlpha(.78);
+      this.levelObjects.push(sign);
+      if(i%2===0){
+        const prop=this.add.image(x+180,590,`prop${i%4}-${(i%4)+1}`).setScale(.18).setAlpha(.7).setDepth(0);
+        this.levelObjects.push(prop);
+      }
+    }
+    for(const enc of ENCOUNTERS){
+      const title=this.add.text(enc.x,340,enc.title,{fontFamily:'Black Ops One',fontSize:'15px',color:'#ffd229',stroke:'#000',strokeThickness:6}).setOrigin(.5).setAlpha(.28).setDepth(-3);
+      this.levelObjects.push(title);
+    }
+  }
+
+  finish(){
+    if(!this.running)return;this.running=false;this.transition=true;this.physics.pause();
+    if(unlockAchievement('pink-slice','PINK PIGEON SURVIVOR'))this.game.events.emit('achievement',{name:'PINK PIGEON SURVIVOR'});
+    const best=recordClear(this.state.score),seconds=Math.round((Date.now()-this.state.startedAt)/1000),stageStats={score:this.state.score-this.stageStartScore,kills:this.state.kills-this.stageStartKills,damage:this.state.damageTaken-this.stageStartDamage,cash:this.state.cash};
+    this.game.events.emit('ending',{score:this.state.score,cash:this.state.cash,best,kills:this.state.kills,damage:this.state.damageTaken,seconds,stageStats,difficulty:DIFFICULTIES[this.difficultyKey].name,retry:()=>this.scene.restart({auto:true})});
+  }
+
+  die(){
+    if(!this.running)return;this.running=false;this.player.setActive(false);this.physics.pause();this.audio.hurt();
+    this.game.events.emit('gameover',{score:this.state.score,stage:0,kills:this.state.kills,damage:this.state.damageTaken,difficulty:DIFFICULTIES[this.difficultyKey].name,retry:()=>this.scene.restart({auto:true})});
+  }
+
+  togglePause(){
+    if(!this.running||!this.player.active)return;
+    if(this.paused)return;
+    this.paused=true;this.scene.pause();
+    this.game.events.emit('pause',{resume:()=>{if(!this.paused)return;this.paused=false;this.scene.resume();this.game.events.emit('closeModal');this.game.events.emit('resumed')}});
+  }
+
+  hitStop(ms:number){const world=this.physics.world,old=world.timeScale;world.timeScale=3.3;this.time.delayedCall(ms,()=>{world.timeScale=old})}
+  impact(x:number,y:number){const fx=this.add.image(x,y,'prop3-1').setScale(.18).setDepth(999);this.tweens.add({targets:fx,scale:.46,alpha:0,angle:90,duration:150,onComplete:()=>fx.destroy()})}
+  configureBody(sprite:Phaser.Physics.Arcade.Sprite,w:number,h:number){sprite.setBodySize(w,h).setOffset((sprite.width-w)/2,(sprite.height-h)/2)}
+  toast(text:string,duration=900){this.game.events.emit('toast',{text,duration})}
+
+  emitHud(){
+    const current=Math.min(this.encounterIndex+1,ENCOUNTERS.length),next=ENCOUNTERS[Math.min(this.encounterIndex,ENCOUNTERS.length-1)];
+    this.game.events.emit('hud',{...this.state,stageData:STAGES[0],progress:{current,total:ENCOUNTERS.length,label:this.encounterActive?next?.title:(this.encounterIndex>=ENCOUNTERS.length?'EXIT':'ADVANCE'),distance:Math.max(0,Math.min(1,this.player.x/WORLD_W)),route:'QUALITY SLICE'},boss:this.activeBoss?{name:ENEMIES[this.activeBoss.kind].name,hp:this.activeBoss.hp,max:this.activeBoss.maxHp}:null});
+  }
+
+  createAnimations(){
+    const add=(key:string,frames:string[],rate:number)=>{if(!this.anims.exists(key))this.anims.create({key,frames:frames.map(k=>({key:k})),frameRate:rate,repeat:-1})};
+    add('jack-idle',[1,2,3,4].map(i=>`jack0-${i}`),3);
+    add('jack-run',[1,2,3,4].map(i=>`jack1-${i}`),10);
+    for(let r=0;r<8;r++)add(`woman${r}-walk`,[1,2].map(i=>`woman${r}-${i}`),6);
+    for(let r=0;r<4;r++)add(`man${r}-walk`,[1,2].map(i=>`man${r}-${i}`),6);
+  }
 }
