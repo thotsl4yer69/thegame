@@ -88,17 +88,15 @@ function closeModal(){modal.classList.add('gone');modal.innerHTML=''}
 function mergeRewards(...rewards:CampaignReward[]):CampaignReward{return rewards.reduce((out,reward)=>({hp:(out.hp??0)+(reward.hp??0),high:(out.high??0)+(reward.high??0),cash:(out.cash??0)+(reward.cash??0),packets:(out.packets??0)+(reward.packets??0)}),{} as CampaignReward)}
 async function beginRun(){
   audio.start();
-  campaign.newNight();
   overlay.classList.add('gone');
-  const route=await campaign.chooseRoute(0);
-  scene.setCampaignRoute(route.label,route.threat,route.reward);
+  scene.setCampaignRoute('QUALITY SLICE',0,{});
   document.body.classList.add('game-active');
   hud.classList.remove('gone');
   touch.classList.remove('gone');
   scene.startRun();
 }
 function showHowTo(){
-  modal.innerHTML=`<div class="age">SURVIVAL BRIEF • LEARN IT ONCE</div><h2>HOW TO SURVIVE</h2><div class="how-grid"><article><b>BUILD HIGH</b><p>Keep combos alive. Getting hit burns HIGH and kills your multiplier.</p></article><article><b>SPEND HIGH</b><p>At 95+ HIGH, heavy becomes MONEY SHOT. Pigeon support costs 50 HIGH.</p></article><article><b>SCAVENGE</b><p>Weapons break. Packets spike damage. Kebab repairs MEAT. Cash can distract nearby baddies.</p></article><article><b>MOVE</b><p>Dash is briefly invulnerable. Boss tells and venue hazards are meant to be dodged, not admired.</p></article></div><p class="keys"><b>MOVE</b> A/D　<b>JUMP</b> W/SPACE　<b>SMACK</b> J　<b>HEAVY</b> H　<b>DASH</b> SHIFT　<b>BAG</b> K　<b>PIGEON</b> L　<b>RAIN</b> T</p><button id="back">RIGHT. BAD IDEA TIME.</button>`;
+  modal.innerHTML=`<div class="age">PLAYABILITY REBUILD • THREE THINGS ONLY</div><h2>HOW TO FIGHT</h2><div class="how-grid"><article><b>MOVE ON THE FLOOR</b><p>Use four directions. This is a belt-scroller now: line yourself up with enemies before swinging.</p></article><article><b>SMACK ×3</b><p>Tap SMACK three times with rhythm. Hits 1–2 set up the heavier third-hit finisher.</p></article><article><b>HARD</b><p>Slower, wider heavy attack. At full HIGH it becomes the high-damage MONEY SHOT automatically.</p></article><article><b>DASH</b><p>Short invulnerable dodge in any held direction. Use it on the yellow enemy telegraph, then punish.</p></article></div><p class="keys"><b>MOVE</b> WASD / ARROWS　<b>SMACK</b> J　<b>HARD</b> H　<b>DASH</b> SHIFT</p><button id="back">GOT IT</button>`;
   modal.classList.remove('gone');
   q('#back').onclick=closeModal;
 }
@@ -245,17 +243,14 @@ game.events.on('gameover',({score,stage,kills,damage,difficulty:runDifficulty,re
   q('#retry').onclick=()=>location.reload();
   q('#title').onclick=()=>location.reload();
 });
-game.events.on('ending',async({score,cash,best,kills,damage,seconds,stageStats,difficulty:runDifficulty}:any)=>{
+game.events.on('ending',async({score,cash,best,kills,damage,seconds,difficulty:runDifficulty}:any)=>{
   audio.pause(true);
   hud.classList.add('gone');
   touch.classList.add('gone');
-  campaign.recordPerformance(stageStats);
-  await cutscenes.play(3);
-  const ending=campaign.getEnding(),campaignState=campaign.summary();
   const time=formatTime(seconds);
   const rank=rankRun(score,true);
-  const stats=recordRun({score,kills,damage,cleared:true,seconds});
-  modal.innerHTML=`<div class="age">${ending.score} • ${runDifficulty}</div><div class="night-rating">NIGHT RATING <b>${rank}</b></div><h1>${ending.title}</h1><h2>${ending.subtitle}</h2><p>${ending.copy}</p><p class="stats">RIZZ ${campaignState.rizz}　•　HEAT ${campaignState.heat}　•　DEBT $${campaignState.debt}　•　THOT ${campaignState.thot}%<br>SCORE ${score.toLocaleString()}　•　CASH $${cash}　•　BEST ${best.toLocaleString()}<br>PROBLEMS ${kills}　•　MEAT LOST ${Math.round(damage)}　•　TIME ${time}${stats.fastestClear?`　•　PB ${formatTime(stats.fastestClear)}`:''}</p><div class="menu-actions"><button id="retry">RUIN ANOTHER NIGHT</button><button id="title" class="secondary">TITLE + DOSSIERS</button></div>`;
+  recordRun({score,kills,damage,cleared:true,seconds});
+  modal.innerHTML=`<div class="age">PINK PIGEON QUALITY SLICE • ${runDifficulty}</div><div class="night-rating">COMBAT RATING <b>${rank}</b></div><h1>SLICE<br><span>CLEARED</span></h1><h2>THIS IS THE GATE, NOT THE FINISH LINE.</h2><p>The rebuild stops here deliberately. If this combat and movement are not good enough, nothing else gets expanded.</p><p class="stats">SCORE ${score.toLocaleString()}　•　CASH $${cash}　•　BEST ${best.toLocaleString()}<br>PROBLEMS ${kills}　•　MEAT LOST ${Math.round(damage)}　•　TIME ${time}</p><div class="menu-actions"><button id="retry">RUN THE SLICE AGAIN</button><button id="title" class="secondary">BACK TO TITLE</button></div>`;
   modal.classList.remove('gone');
   q('#retry').onclick=()=>location.reload();
   q('#title').onclick=()=>location.reload();
