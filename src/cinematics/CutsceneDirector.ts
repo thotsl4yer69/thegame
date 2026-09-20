@@ -99,6 +99,8 @@ export class CutsceneDirector{
   private beat=0;
   private resolve?:()=>void;
   private tipTotal=0;
+  private choiceMode=false;
+  private choiceResolved=false;
   private bg?:HTMLImageElement;
   private jack?:HTMLImageElement;
   private lead?:HTMLImageElement;
@@ -110,7 +112,7 @@ export class CutsceneDirector{
     this.stage=this.query('#cutscene-stage');
     this.query<HTMLButtonElement>('#cutscene-next').onclick=()=>this.advance();
     this.query<HTMLButtonElement>('#cutscene-tip').onclick=()=>this.tipStage();
-    this.query<HTMLButtonElement>('#cutscene-skip').onclick=()=>this.finish();
+    this.query<HTMLButtonElement>('#cutscene-skip').onclick=()=>this.skipOrChoose();
     window.addEventListener('keydown',event=>{
       if(this.root.classList.contains('gone'))return;
       if(event.key==='Escape'){event.preventDefault();this.finish()}
@@ -141,6 +143,8 @@ export class CutsceneDirector{
     this.current=CUTSCENES[id];
     this.beat=0;
     this.tipTotal=0;
+    this.choiceMode=false;
+    this.choiceResolved=false;
     this.root.style.setProperty('--cut-accent',this.current.accent);
     this.root.dataset.scene=String(this.current.id);
     this.root.classList.remove('gone');
@@ -249,17 +253,21 @@ export class CutsceneDirector{
 
   private advance(){
     if(!this.current)return;
+    if(this.choiceResolved){this.finish();return}
+    if(this.choiceMode){this.resolveChoice('ask');return}
     if(this.beat<this.current.beats.length-1){
       this.beat++;
       this.renderBeat();
       if('vibrate' in navigator)navigator.vibrate(8);
       return;
     }
+    if(this.current.id===0){this.enterChoiceMode();return}
     this.finish();
   }
 
   private tipStage(){
     if(this.current?.id!==0)return;
+    if(this.choiceMode&&!this.choiceResolved){this.resolveChoice('tip');return}
     this.tipTotal+=20;
     this.query<HTMLButtonElement>('#cutscene-tip').textContent=`$${this.tipTotal} TIPPED • AGAIN`;
     this.query('#cutscene-speaker').textContent='HOUSE MC';
@@ -272,6 +280,57 @@ export class CutsceneDirector{
     if(this.lead){void this.lead.offsetWidth;this.lead.classList.add('tip-pop')}
     this.cashBurst();
     if('vibrate' in navigator)navigator.vibrate([12,24,12]);
+  }
+
+  private enterChoiceMode(){
+    if(!this.current||this.current.id!==0)return;
+    this.choiceMode=true;
+    this.query('#cutscene-speaker').textContent='ROXI REDLINE';
+    this.query('#cutscene-stamp').textContent='YOUR MOVE • MAKE IT COUNT';
+    this.query('#cutscene-line').textContent='Roxi leans back against the dressing-room mirror, one heel hooked under the booth, waiting to see whether you want information, attention, or another terrible financial decision.';
+    this.query<HTMLButtonElement>('#cutscene-next').textContent='ASK ABOUT VIPER';
+    this.query<HTMLButtonElement>('#cutscene-tip').classList.remove('gone');
+    this.query<HTMLButtonElement>('#cutscene-tip').textContent='TIP ROXI $50';
+    this.query<HTMLButtonElement>('#cutscene-skip').textContent='KEEP FLIRTING';
+    this.query('#cutscene-index').textContent='DEBAUCHERY 92%';
+  }
+
+  private resolveChoice(choice:'ask'|'tip'|'flirt'){
+    if(!this.current||this.current.id!==0||this.choiceResolved)return;
+    this.choiceResolved=true;
+    this.choiceMode=true;
+    const next=this.query<HTMLButtonElement>('#cutscene-next');
+    const tip=this.query<HTMLButtonElement>('#cutscene-tip');
+    const skip=this.query<HTMLButtonElement>('#cutscene-skip');
+    tip.classList.add('gone');
+    skip.classList.add('gone');
+    next.textContent='LEAVE THE BOOTH →';
+
+    if(choice==='tip'){
+      this.tipTotal+=50;
+      this.query('#cutscene-speaker').textContent='ROXI REDLINE';
+      this.query('#cutscene-stamp').textContent='$50 • FINANCIAL JUDGMENT: ABSENT';
+      this.query('#cutscene-line').textContent='Roxi folds the note into her garter, catches you looking and grins. “Good. At least one of us understands the business model. Viper. Back alley. Two-fifteen.”';
+      this.cashBurst();
+    }else if(choice==='flirt'){
+      this.query('#cutscene-speaker').textContent='ROXI REDLINE';
+      this.query('#cutscene-stamp').textContent='CHEMISTRY: INCONVENIENT';
+      this.query('#cutscene-line').textContent='“Still here?” Roxi asks. You tell her the view improved. She laughs, drags a lipstick mark across your collar and whispers Viper’s address close enough to make it difficult to remember.';
+      this.lead?.classList.add('tip-pop');
+    }else{
+      this.query('#cutscene-speaker').textContent='ROXI REDLINE';
+      this.query('#cutscene-stamp').textContent='BUSINESS BEFORE BAD DECISIONS';
+      this.query('#cutscene-line').textContent='Roxi rolls her eyes at the sudden professionalism, tears a strip from the drinks receipt and writes: VIPER — BACK ALLEY — 2:15. “Boring answer. Useful question.”';
+    }
+
+    this.query('#cutscene-index').textContent='DEBAUCHERY 96%';
+    if('vibrate' in navigator)navigator.vibrate([10,24,10]);
+  }
+
+  private skipOrChoose(){
+    if(this.choiceResolved){this.finish();return}
+    if(this.choiceMode){this.resolveChoice('flirt');return}
+    this.finish();
   }
 
   private cashBurst(){
