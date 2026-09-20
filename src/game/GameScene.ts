@@ -461,7 +461,7 @@ export class GameScene extends Phaser.Scene{
 
   finish(){
     if(!this.running)return;this.running=false;this.transition=true;this.physics.pause();
-    if(unlockAchievement('pink-slice','PINK PIGEON SURVIVOR'))this.game.events.emit('achievement',{name:'PINK PIGEON SURVIVOR'});
+    if(unlockAchievement('pink-slice'))this.game.events.emit('achievement',{name:'PINK PIGEON SURVIVOR'});
     const best=recordClear(this.state.score),seconds=Math.round((Date.now()-this.state.startedAt)/1000),stageStats={score:this.state.score-this.stageStartScore,kills:this.state.kills-this.stageStartKills,damage:this.state.damageTaken-this.stageStartDamage,cash:this.state.cash};
     this.game.events.emit('ending',{score:this.state.score,cash:this.state.cash,best,kills:this.state.kills,damage:this.state.damageTaken,seconds,stageStats,difficulty:DIFFICULTIES[this.difficultyKey].name,retry:()=>this.scene.restart({auto:true})});
   }
