@@ -9,8 +9,9 @@ type EnemyState='approach'|'telegraph'|'recover'|'stunned';
 type Foe=Phaser.Physics.Arcade.Sprite&{
   kind:EnemyKey;hp:number;maxHp:number;damage:number;worth:number;speed:number;boss:boolean;dead:boolean;
   ai:EnemyState;nextAttack:number;attackAt:number;recoverUntil:number;stunnedUntil:number;
-  slotX:number;slotY:number;shadow?:Phaser.GameObjects.Ellipse;barBg?:Phaser.GameObjects.Rectangle;bar?:Phaser.GameObjects.Rectangle;
+  slotX:number;slotY:number;shadow?:Phaser.GameObjects.Ellipse;barBg?:Phaser.GameObjects.Rectangle;bar?:Phaser.GameObjects.Rectangle;telegraph?:Phaser.GameObjects.Ellipse;
 };
+type Breakable=Phaser.GameObjects.Image&{hp:number;cash:number;label:string;broken:boolean};
 type RunState={stage:number;wave:number;hp:number;maxHp:number;high:number;packets:number;cash:number;score:number;combo:number;kills:number;damageTaken:number;startedAt:number;upgrades:Set<string>;weapon:string;weaponHits:number};
 type Encounter={x:number;title:string;enemies:EnemyKey[];boss?:EnemyKey};
 type AttackDef={duration:number;hitAt:number;rangeX:number;rangeY:number;damage:number;knock:number;lunge:number;frame:number};
@@ -19,6 +20,12 @@ const WORLD_W=6200;
 const FLOOR_TOP=405;
 const FLOOR_BOTTOM=625;
 const PLAYER_SPEED=285;
+const ZONES=[
+  {start:0,end:1500,name:'QUEUE & ENTRY',subtitle:'VELVET ROPE • FLASH PHOTOGRAPHY',tint:0xff4aa8,floor:0x25091f},
+  {start:1500,end:3000,name:'MAIN FLOOR',subtitle:'BASS • GLITTER • BAD SPACING',tint:0xb64aff,floor:0x170b2a},
+  {start:3000,end:4550,name:'VIP CORRIDOR',subtitle:'MIRRORS • GOLD • NO REFUNDS',tint:0xffc247,floor:0x24150a},
+  {start:4550,end:WORLD_W,name:"OWNER'S BOOTH",subtitle:'PRIVATE • EXPENSIVE • HOSTILE',tint:0xff315e,floor:0x26080e}
+] as const;
 const ENCOUNTERS:Encounter[]=[
   {x:980,title:'FRONT DOOR SHAKEDOWN',enemies:['lexi','roxi']},
   {x:2280,title:'MAIN FLOOR',enemies:['lexi','lola','roxi']},
@@ -37,6 +44,8 @@ export class GameScene extends Phaser.Scene{
   background!:Phaser.GameObjects.TileSprite;
   midground!:Phaser.GameObjects.TileSprite;
   floorGlow!:Phaser.GameObjects.Rectangle;
+  breakables:Breakable[]=[];
+  currentZone=-1;
 
   cursors!:Phaser.Types.Input.Keyboard.CursorKeys;
   keys!:Record<string,Phaser.Input.Keyboard.Key>;
