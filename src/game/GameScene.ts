@@ -169,6 +169,7 @@ export class GameScene extends Phaser.Scene{
     this.state.hp=Math.max(1,Math.min(this.state.maxHp,this.state.hp+(r.hp??0)));
     this.state.high=Math.max(0,Math.min(100,this.state.high+(r.high??0)));
     this.state.cash=Math.max(0,this.state.cash+(r.cash??0));
+    this.state.packets=Math.max(0,this.state.packets+(r.packets??0));
     this.pendingCampaignReward={};
   }
 
@@ -724,7 +725,7 @@ export class GameScene extends Phaser.Scene{
 
   die(){
     if(!this.running)return;this.running=false;this.player.setActive(false);this.physics.pause();this.audio.hurt();
-    this.game.events.emit('gameover',{score:this.state.score,stage:0,kills:this.state.kills,damage:this.state.damageTaken,difficulty:DIFFICULTIES[this.difficultyKey].name,retry:()=>this.scene.restart({auto:true})});
+    this.game.events.emit('gameover',{score:this.state.score,stage:this.chapterIndex,kills:this.state.kills,damage:this.state.damageTaken,difficulty:DIFFICULTIES[this.difficultyKey].name,retry:()=>this.scene.restart({auto:true})});
   }
 
   togglePause(){
