@@ -137,6 +137,16 @@ export class GameScene extends Phaser.Scene{
     this.state={stage:0,wave:0,hp:100,maxHp:100,high:0,packets:0,cash:0,score:0,combo:0,kills:0,damageTaken:0,startedAt:Date.now(),upgrades:new Set(),weapon:'FISTS',weaponHits:0};
   }
 
+  exportProgress(){return{chapterIndex:this.chapterIndex,state:{...this.state,upgrades:[...this.state.upgrades]},powerMult:this.powerMult,speedMult:this.speedMult,route:this.campaignRouteLabel,threat:this.campaignThreat}}
+  restoreProgress(data:any){
+    if(!data)return;
+    const saved=data.state??{};
+    this.state={...this.state,...saved,upgrades:new Set<string>(Array.isArray(saved.upgrades)?saved.upgrades:[])};
+    this.powerMult=Number(data.powerMult)||1;this.speedMult=Number(data.speedMult)||1;
+    this.campaignRouteLabel=String(data.route||'STORY ROUTE');this.campaignThreat=Number(data.threat)||0;
+    this.setChapter(Number(data.chapterIndex)||0);
+  }
+
   startRun(){
     if(!this.ready){this.auto=true;return}
     if(this.running)return;
