@@ -40,6 +40,7 @@ const worldmap=q('#worldmap');
 const cutscenes=new CutsceneDirector(cutsceneRoot);
 const campaign=new CampaignDirector(worldmap);
 const RELEASE_CACHE='ts69-v4';
+const CHECKPOINT_KEY='ts69-story-checkpoint-v4';
 const SALEM_ART_URL='https://d2ol7oe51mr4n9.cloudfront.net/user_3J2eeA6Q5aKeLXqP7Sh07VXpkjX/2f3b3a32-7b03-4907-81cb-b5a15d860841.png';
 let toastTimer=0;
 let bossTimer=0;
@@ -62,6 +63,12 @@ const CAMPAIGN_UPGRADES=[
   {id:'meat',name:'THICK SKIN',desc:'+18 max MEAT and heal 28 immediately.'},
   {id:'high',name:'BAD INFLUENCE',desc:'+35 HIGH immediately. Start the next district messy.'}
 ] as const;
+
+function readCheckpoint(){try{return JSON.parse(localStorage.getItem(CHECKPOINT_KEY)||'null')}catch{return null}}
+function saveCheckpoint(){try{localStorage.setItem(CHECKPOINT_KEY,JSON.stringify(scene.exportProgress()))}catch{}}
+function clearCheckpoint(){localStorage.removeItem(CHECKPOINT_KEY)}
+function refreshContinue(){q('#continue').classList.toggle('gone',!readCheckpoint())}
+async function waitSceneReady(){for(let i=0;i<80&&!scene.ready;i++)await new Promise(r=>setTimeout(r,25))}
 
 function renderTitleStats(){
   const stats=readStats();
@@ -92,20 +99,25 @@ function selectDifficulty(key:string){
 document.querySelectorAll<HTMLButtonElement>('[data-diff]').forEach(button=>button.onclick=()=>selectDifficulty(button.dataset.diff!));
 selectDifficulty(difficulty);
 renderTitleStats();
+refreshContinue();
 
 function closeModal(){modal.classList.add('gone');modal.innerHTML=''}
 function mergeRewards(...rewards:CampaignReward[]):CampaignReward{return rewards.reduce((out,reward)=>({hp:(out.hp??0)+(reward.hp??0),high:(out.high??0)+(reward.high??0),cash:(out.cash??0)+(reward.cash??0),packets:(out.packets??0)+(reward.packets??0)}),{} as CampaignReward)}
 async function beginRun(){
-  audio.start();
-  campaign.newNight();
+  await waitSceneReady();
+  audio.start();clearCheckpoint();campaign.newNight();
   overlay.classList.add('gone');
   const route=await campaign.chooseRoute(0);
-  scene.setChapter(0);
-  scene.setCampaignRoute(route.label,route.threat,route.reward);
-  document.body.classList.add('game-active');
-  hud.classList.remove('gone');
-  touch.classList.remove('gone');
-  scene.startRun();
+  scene.resetState();scene.setChapter(0);scene.setCampaignRoute(route.label,route.threat,route.reward);
+  document.body.classList.add('game-active');hud.classList.remove('gone');touch.classList.remove('gone');
+  scene.startRun();saveCheckpoint();
+}
+async function resumeRun(){
+  const checkpoint=readCheckpoint();if(!checkpoint){await beginRun();return}
+  await waitSceneReady();audio.start();overlay.classList.add('gone');
+  scene.restoreProgress(checkpoint);
+  document.body.classList.add('game-active');hud.classList.remove('gone');touch.classList.remove('gone');
+  scene.startChapter(scene.chapterIndex,{});
 }
 function showHowTo(){
   modal.innerHTML=`<div class="age">PLAYABILITY REBUILD • THREE THINGS ONLY</div><h2>HOW TO FIGHT</h2><div class="how-grid"><article><b>MOVE ON THE FLOOR</b><p>Use four directions. This is a belt-scroller now: line yourself up with enemies before swinging.</p></article><article><b>SMACK ×3</b><p>Tap SMACK three times with rhythm. Hits 1–2 set up the heavier third-hit finisher.</p></article><article><b>HARD</b><p>Slower, wider heavy attack. At full HIGH it becomes the high-damage MONEY SHOT automatically.</p></article><article><b>DASH</b><p>Short invulnerable dodge in any held direction. Use it on the yellow enemy telegraph, then punish.</p></article></div><p class="keys"><b>MOVE</b> WASD / ARROWS　<b>SMACK</b> J　<b>HARD</b> H　<b>DASH</b> SHIFT</p><button id="back">GOT IT</button>`;
@@ -148,6 +160,7 @@ function showCinema(){
 }
 
 q('#start').onclick=()=>void beginRun();
+q('#continue').onclick=()=>void resumeRun();
 q('#how').onclick=showHowTo;
 q('#cast').onclick=showCast;
 q('#cinema').onclick=showCinema;
@@ -244,7 +257,7 @@ game.events.on('chapterComplete',async({chapter,chapterData,stageStats}:any)=>{
     const route=await campaign.chooseRoute(nextChapter);
     scene.setCampaignRoute(route.label,route.threat,route.reward);
     hud.classList.remove('gone');touch.classList.remove('gone');audio.pause(false);
-    scene.startChapter(nextChapter,route.reward);
+    scene.startChapter(nextChapter,route.reward);saveCheckpoint();
   });
 });
 game.events.on('pause',(payload?:{resume?:()=>void})=>{
@@ -273,6 +286,7 @@ game.events.on('ending',async({score,cash,best,kills,damage,seconds,stageStats,d
   await cutscenes.play(CHAPTERS[CHAPTERS.length-1].cutsceneId as CutsceneId);
   const result=campaign.getEnding(),summary=campaign.summary(),time=formatTime(seconds),rank=rankRun(score,true);
   recordRun({score,kills,damage,cleared:true,seconds});
+  clearCheckpoint();
   modal.innerHTML=`<div class="age">${result.subtitle} • ${runDifficulty}</div><div class="night-rating">MELBOURNE RATING <b>${rank}</b></div><h1>${result.title}</h1><p>${result.copy}</p><p class="stats">RIZZ ${summary.rizz} • HEAT ${summary.heat} • DEBT $${summary.debt} • THOT ${summary.thot}%<br>SCORE ${score.toLocaleString()} • CASH $${cash} • BEST ${best.toLocaleString()}<br>PROBLEMS ${kills} • MEAT LOST ${Math.round(damage)} • TIME ${time}</p><div class="menu-actions"><button id="retry">ANOTHER NIGHT</button><button id="title" class="secondary">TITLE + DOSSIERS</button></div>`;
   modal.classList.remove('gone');
   q('#retry').onclick=()=>location.reload();q('#title').onclick=()=>location.reload();
