@@ -50,6 +50,10 @@ test('desktop player journey covers difficulty, help, combat, pause and persiste
   await page.locator('[data-diff="cooked"]').click();
 
   await page.locator('#start').click();
+  await expect(page.locator('#worldmap')).not.toHaveClass(/gone/);
+  await expect(page.locator('.map-node')).toHaveCount(4);
+  await expect(page.locator('.route-options [data-route]')).toHaveCount(3);
+  await page.locator('[data-route="0"]').click();
   await expect(page.locator('#hud')).not.toHaveClass(/gone/);
   await expect(page.locator('canvas')).toBeVisible();
   await expect(page.locator('#wave')).toContainText('ADVANCE');
@@ -101,6 +105,8 @@ test('mobile landscape exposes responsive touch combat controls', async ({},test
   await page.locator('#cutscene-skip').click();
   await page.locator('#back').click();
   await page.locator('#start').click();
+  await expect(page.locator('#worldmap')).not.toHaveClass(/gone/);
+  await page.locator('[data-route="0"]').click();
   await expect(page.locator('#touch')).not.toHaveClass(/gone/);
   await expect(page.locator('#touch button')).toHaveCount(10);
   await page.locator('[data-action="right"]').dispatchEvent('pointerdown');
@@ -126,4 +132,20 @@ test('first loaded production build remains playable offline', async ({ page, co
   await page.reload({ waitUntil: 'domcontentloaded' });
   await expect(page).toHaveTitle(/THOTSL4YER69/);
   await expect(page.locator('#start')).toBeVisible();
+});
+
+
+test('THOT CITY overworld exposes persistent campaign stats and route risk', async ({ page }) => {
+  await page.goto('/', { waitUntil: 'networkidle' });
+  await page.locator('#start').click();
+  await expect(page.locator('#worldmap')).not.toHaveClass(/gone/);
+  await expect(page.locator('.campaign-stats')).toContainText('RIZZ');
+  await expect(page.locator('.campaign-stats')).toContainText('THOT-O-METER');
+  await expect(page.locator('.route-options button')).toHaveCount(3);
+  await expect(page.locator('.route-options button').nth(0)).toContainText('THREAT');
+  await expect(page.locator('.map-node.current')).toContainText('THE PINK PIGEON');
+  await page.locator('[data-route="1"]').click();
+  await expect(page.locator('#worldmap')).toHaveClass(/gone/);
+  await expect(page.locator('#hud')).not.toHaveClass(/gone/);
+  await expect(page.locator('#wave')).toContainText('/4');
 });
