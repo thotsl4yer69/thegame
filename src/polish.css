@@ -694,3 +694,27 @@ body.cutscene-active #marquee { opacity: 0; }
 @media (prefers-reduced-motion:reduce) {
   #marquee span,#overlay h1,.cutscene-frame::before { animation:none!important; }
 }
+
+
+/* continuous side-scroller route meter */
+#route-track {
+  display:block;
+  width:min(260px,36vw);
+  height:5px;
+  margin:6px auto 0;
+  overflow:hidden;
+  background:#140b15cc;
+  border:1px solid #ffffff55;
+  transform:skew(-10deg);
+}
+#route-bar {
+  display:block;
+  width:0;
+  height:100%;
+  background:linear-gradient(90deg,var(--pink),var(--gold),var(--cyan));
+  box-shadow:0 0 10px var(--pink);
+  transition:width .12s linear;
+}
+@media(max-height:500px){
+  #route-track{width:180px;height:4px;margin-top:3px}
+}
