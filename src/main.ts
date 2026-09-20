@@ -262,7 +262,7 @@ document.querySelectorAll<HTMLButtonElement>('#touch [data-action]').forEach(but
     vibrate(action==='hit'||action==='heavy'?14:8);
     game.events.emit('touch',action,true);
   });
-  for(const eventName of ['pointerup','pointercancel'])button.addEventListener(eventName,event=>{
+  for(const eventName of ['pointerup','pointercancel'] as const)button.addEventListener(eventName,(event:PointerEvent)=>{
     if(button.hasPointerCapture?.(event.pointerId))button.releasePointerCapture(event.pointerId);
     game.events.emit('touch',action,false);
   });
