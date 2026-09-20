@@ -40,6 +40,7 @@ const worldmap=q('#worldmap');
 const cutscenes=new CutsceneDirector(cutsceneRoot);
 const campaign=new CampaignDirector(worldmap);
 const RELEASE_CACHE='ts69-v4';
+const SALEM_ART_URL='https://d2ol7oe51mr4n9.cloudfront.net/user_3J2eeA6Q5aKeLXqP7Sh07VXpkjX/2f3b3a32-7b03-4907-81cb-b5a15d860841.png';
 let toastTimer=0;
 let bossTimer=0;
 let achievementTimer=0;
@@ -124,9 +125,19 @@ function showCast(){
     ['suki','Suki Static','woman-row6','Rave voltage with enough bass to rearrange your organs and browsing history.'],
     ['bianca','Bianca Blackout','woman-row7','White suit, black ledger. She owns the room and half your future income.']
   ];
-  modal.innerHTML=`<div class="age">AFTER-DARK BADDIE DOSSIERS • ${unlocked.length}/8 DROPPED</div><h2>THE PROBLEMS</h2><div class="cards after-dark">${cast.map(([key,name,row,desc])=>`<article class="card ${unlocked.includes(key)?'unlocked':'locked'}"><img src="assets/characters/${row}/01.png" alt="${name}"><h3>${name}</h3><p>${unlocked.includes(key)?desc:'DROP HER IN-GAME TO UNLOCK THE FILTHY DOSSIER.'}</p></article>`).join('')}</div><button id="back">BACK TO THE BAD IDEA</button>`;
+  modal.innerHTML=`<div class="age">AFTER-DARK DOSSIERS • MELBOURNE NIGHT SHIFT</div><h2>THE PROBLEMS</h2><div class="cards after-dark">${cast.map(([key,name,row,desc])=>`<article class="card ${unlocked.includes(key)?'unlocked':'locked'}"><img src="assets/characters/${row}/01.png" alt="${name}"><h3>${name}</h3><p>${unlocked.includes(key)?desc:'DROP HER IN-GAME TO UNLOCK THE DOSSIER.'}</p></article>`).join('')}<article class="card unlocked"><img src="${SALEM_ART_URL}" alt="Salem"><h3>SALEM</h3><p>Fitzroy goth operator. Knows every back door, every bad rumour, and exactly when to leave before the cops arrive.</p></article></div><button id="back">BACK TO THE BAD IDEA</button>`;
   modal.classList.remove('gone');
   q('#back').onclick=closeModal;
+}
+
+async function showSalemInterlude(chapter:number){
+  if(chapter!==1&&chapter!==4)return;
+  worldmap.classList.remove('gone');document.body.classList.add('campaign-active');
+  return new Promise<void>(resolve=>{
+    const late=chapter===4;
+    worldmap.innerHTML=`<div class="salem-interlude"><img src="${SALEM_ART_URL}" alt="Salem"><article class="salem-card"><small>${late?'FOOTSCRAY • 5:11AM':'FITZROY • 2:31AM'} • SALEM</small><h2>${late?'YOU AGAIN.':'SALEM KNOWS.'}</h2><p>${late?'“You actually made it through Southbank. That is either impressive or medically concerning. Damo is the door, not the room. Finish this before sunrise.”':'“Roxi sends loud men to me when she wants them pointed somewhere useful. Chapel Street. Glasshouse. Viper has the next key. Try not to bleed on my floor.”'}</p><button id="salem-continue">${late?'TO ST KILDA →':'TO CHAPEL STREET →'}</button></article></div>`;
+    (worldmap.querySelector('#salem-continue') as HTMLButtonElement).onclick=()=>{worldmap.classList.add('gone');worldmap.innerHTML='';document.body.classList.remove('campaign-active');resolve()};
+  });
 }
 
 function showCinema(){
@@ -221,6 +232,7 @@ game.events.on('hud',(s:any)=>{
 game.events.on('chapterComplete',async({chapter,chapterData,stageStats}:any)=>{
   hud.classList.add('gone');touch.classList.add('gone');audio.pause(true);
   campaign.recordPerformance(stageStats);
+  if(chapter===1||chapter===4)await showSalemInterlude(chapter);
   await cutscenes.play(chapterData.cutsceneId as CutsceneId);
   modal.innerHTML=`<div class="age">${chapterData.district} • CHAPTER CLEARED</div><h2>CHOOSE WHAT THE NIGHT TAUGHT YOU</h2><div class="choices">${CAMPAIGN_UPGRADES.map(u=>`<button class="choice" data-upgrade="${u.id}"><b>${u.name}</b><small>${u.desc}</small></button>`).join('')}</div>`;
   modal.classList.remove('gone');
