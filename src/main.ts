@@ -10,6 +10,7 @@ import {FilthyAudio} from './game/audio';
 import {UPGRADES} from './game/data';
 import {achievementCount,bestScore,formatTime,rankRun,readGallery,readStats,recordRun} from './game/progression';
 import {CutsceneDirector,CutsceneId} from './cinematics/CutsceneDirector';
+import {CampaignDirector,type CampaignReward} from './game/campaign';
 
 const q=<T extends HTMLElement>(selector:string)=>document.querySelector(selector) as T;
 const audio=new FilthyAudio();
@@ -34,7 +35,9 @@ const touch=q('#touch');
 const toast=q('#toast');
 const shell=q('#shell');
 const cutsceneRoot=q('#cutscene');
+const worldmap=q('#worldmap');
 const cutscenes=new CutsceneDirector(cutsceneRoot);
+const campaign=new CampaignDirector(worldmap);
 const RELEASE_CACHE='ts69-v4';
 let toastTimer=0;
 let bossTimer=0;
@@ -82,10 +85,14 @@ selectDifficulty(difficulty);
 renderTitleStats();
 
 function closeModal(){modal.classList.add('gone');modal.innerHTML=''}
-function beginRun(){
+function mergeRewards(...rewards:CampaignReward[]):CampaignReward{return rewards.reduce((out,reward)=>({hp:(out.hp??0)+(reward.hp??0),high:(out.high??0)+(reward.high??0),cash:(out.cash??0)+(reward.cash??0),packets:(out.packets??0)+(reward.packets??0)}),{} as CampaignReward)}
+async function beginRun(){
   audio.start();
-  document.body.classList.add('game-active');
+  campaign.newNight();
   overlay.classList.add('gone');
+  const route=await campaign.chooseRoute(0);
+  scene.setCampaignRoute(route.label,route.threat,route.reward);
+  document.body.classList.add('game-active');
   hud.classList.remove('gone');
   touch.classList.remove('gone');
   scene.startRun();
@@ -120,7 +127,7 @@ function showCinema(){
   q('#back').onclick=closeModal;
 }
 
-q('#start').onclick=beginRun;
+q('#start').onclick=()=>void beginRun();
 q('#how').onclick=showHowTo;
 q('#cast').onclick=showCast;
 q('#cinema').onclick=showCinema;
@@ -202,13 +209,21 @@ game.events.on('hud',(s:any)=>{
     q<HTMLElement>('#boss-bar').style.width=`${Math.max(0,s.boss.hp/s.boss.max*100)}%`;
   }
 });
-game.events.on('upgrade',async({stage,choices,choose}:any)=>{
+game.events.on('upgrade',async({stage,choices,choose,stageStats}:any)=>{
   hud.classList.add('gone');touch.classList.add('gone');
+  campaign.recordPerformance(stageStats);
   await cutscenes.play(stage as CutsceneId);
-  hud.classList.remove('gone');touch.classList.remove('gone');
+  const storyReward=await campaign.storyBeat(stage);
   modal.innerHTML=`<div class="age">ACT SURVIVED • CHOOSE YOUR NEXT DISORDER</div><h2>DEGENERATE UPGRADE</h2><div class="choices">${choices.map((u:(typeof UPGRADES)[number])=>`<button class="choice" data-id="${u.id}"><b>${u.name}</b><small>${u.desc}</small></button>`).join('')}</div>`;
   modal.classList.remove('gone');
-  modal.querySelectorAll<HTMLButtonElement>('[data-id]').forEach(button=>button.onclick=()=>{closeModal();choose(button.dataset.id)});
+  modal.querySelectorAll<HTMLButtonElement>('[data-id]').forEach(button=>button.onclick=async()=>{
+    const upgradeId=button.dataset.id!;
+    closeModal();
+    const route=await campaign.chooseRoute(stage+1);
+    scene.setCampaignRoute(route.label,route.threat,mergeRewards(storyReward,route.reward));
+    choose(upgradeId);
+    hud.classList.remove('gone');touch.classList.remove('gone');
+  });
 });
 game.events.on('pause',(payload?:{resume?:()=>void})=>{
   if(!payload?.resume)return;
@@ -227,20 +242,22 @@ game.events.on('gameover',({score,stage,kills,damage,difficulty:runDifficulty,re
   const stats=recordRun({score,kills,damage,cleared:false});
   modal.innerHTML=`<div class="age">RUN TERMINATED • ${runDifficulty}</div><div class="night-rating">NIGHT RATING <b>${rank}</b></div><h2>ABSOLUTELY FUCKED IT</h2><p>You reached ${stage+1}/4 venues and scraped together <b>${score.toLocaleString()}</b> points.</p><p class="stats">PROBLEMS DROPPED ${kills}　•　MEAT LOST ${Math.round(damage)}　•　CAREER RUNS ${stats.runs}</p><div class="menu-actions"><button id="retry">MAKE THE SAME MISTAKES AGAIN</button><button id="title" class="secondary">TITLE + DOSSIERS</button></div>`;
   modal.classList.remove('gone');
-  q('#retry').onclick=()=>{audio.pause(false);document.body.classList.add('game-active');closeModal();hud.classList.remove('gone');touch.classList.remove('gone');retry()};
+  q('#retry').onclick=()=>location.reload();
   q('#title').onclick=()=>location.reload();
 });
-game.events.on('ending',async({score,cash,best,kills,damage,seconds,difficulty:runDifficulty,retry}:any)=>{
+game.events.on('ending',async({score,cash,best,kills,damage,seconds,stageStats,difficulty:runDifficulty}:any)=>{
   audio.pause(true);
   hud.classList.add('gone');
   touch.classList.add('gone');
+  campaign.recordPerformance(stageStats);
   await cutscenes.play(3);
+  const ending=campaign.getEnding(),campaignState=campaign.summary();
   const time=formatTime(seconds);
   const rank=rankRun(score,true);
   const stats=recordRun({score,kills,damage,cleared:true,seconds});
-  modal.innerHTML=`<div class="age">DAWN ENDING UNLOCKED • ${runDifficulty}</div><div class="night-rating">NIGHT RATING <b>${rank}</b></div><h1>STILL<br><span>UNCAGED</span></h1><h2>YOU SURVIVED, CUNT.</h2><p>The sun rose. Damo fell. The kebab was medicinal.<br>You remember roughly 14% of the evening.</p><p class="stats">SCORE ${score.toLocaleString()}　•　CASH $${cash}　•　BEST ${best.toLocaleString()}<br>PROBLEMS ${kills}　•　MEAT LOST ${Math.round(damage)}　•　TIME ${time}${stats.fastestClear?`　•　PB ${formatTime(stats.fastestClear)}`:''}</p><div class="menu-actions"><button id="retry">RUIN ANOTHER NIGHT</button><button id="title" class="secondary">VIEW UNLOCKED BADDIES</button></div>`;
+  modal.innerHTML=`<div class="age">${ending.score} • ${runDifficulty}</div><div class="night-rating">NIGHT RATING <b>${rank}</b></div><h1>${ending.title}</h1><h2>${ending.subtitle}</h2><p>${ending.copy}</p><p class="stats">RIZZ ${campaignState.rizz}　•　HEAT ${campaignState.heat}　•　DEBT $${campaignState.debt}　•　THOT ${campaignState.thot}%<br>SCORE ${score.toLocaleString()}　•　CASH $${cash}　•　BEST ${best.toLocaleString()}<br>PROBLEMS ${kills}　•　MEAT LOST ${Math.round(damage)}　•　TIME ${time}${stats.fastestClear?`　•　PB ${formatTime(stats.fastestClear)}`:''}</p><div class="menu-actions"><button id="retry">RUIN ANOTHER NIGHT</button><button id="title" class="secondary">TITLE + DOSSIERS</button></div>`;
   modal.classList.remove('gone');
-  q('#retry').onclick=()=>{audio.pause(false);document.body.classList.add('game-active');closeModal();hud.classList.remove('gone');touch.classList.remove('gone');retry()};
+  q('#retry').onclick=()=>location.reload();
   q('#title').onclick=()=>location.reload();
 });
 
@@ -267,4 +284,4 @@ document.querySelectorAll<HTMLButtonElement>('#touch [data-action]').forEach(but
     game.events.emit('touch',action,false);
   });
 });
-window.addEventListener('blur',()=>{if(modal.classList.contains('gone')&&cutsceneRoot.classList.contains('gone'))game.events.emit('autopause')});
+window.addEventListener('blur',()=>{if(modal.classList.contains('gone')&&cutsceneRoot.classList.contains('gone')&&worldmap.classList.contains('gone'))game.events.emit('autopause')});
