@@ -1002,23 +1002,23 @@ body.campaign-active #marquee{opacity:0}
   border-color:#fff;
   box-shadow:1px 1px #0008,0 0 14px #ff269caa;
 }
-.touch-dpad{
+#touch.quality-touch .touch-dpad{
   display:grid;
   grid-template-columns:repeat(3,56px);
   grid-template-rows:repeat(3,56px);
   gap:3px;
   pointer-events:none;
 }
-.touch-dpad button{
+#touch.quality-touch .touch-dpad button{
   width:56px;
   height:56px;
   border-radius:14px;
   font-size:20px;
 }
-.touch-dpad .d-up{grid-column:2;grid-row:1}
-.touch-dpad .d-left{grid-column:1;grid-row:2}
-.touch-dpad .d-right{grid-column:3;grid-row:2}
-.touch-dpad .d-down{grid-column:2;grid-row:3}
+#touch.quality-touch .touch-dpad .d-up{grid-column:2;grid-row:1}
+#touch.quality-touch .touch-dpad .d-left{grid-column:1;grid-row:2}
+#touch.quality-touch .touch-dpad .d-right{grid-column:3;grid-row:2}
+#touch.quality-touch .touch-dpad .d-down{grid-column:2;grid-row:3}
 
 #touch.quality-touch .touch-combat{
   display:flex;
@@ -1056,23 +1056,23 @@ body.campaign-active #marquee{opacity:0}
 }
 
 @media(max-height:500px){
-  .touch-dpad{
+  #touch.quality-touch .touch-dpad{
     grid-template-columns:repeat(3,48px);
     grid-template-rows:repeat(3,48px);
     gap:2px;
   }
-  .touch-dpad button{width:48px;height:48px;border-radius:12px;font-size:17px}
+  #touch.quality-touch .touch-dpad button{width:48px;height:48px;border-radius:12px;font-size:17px}
   #touch.quality-touch .touch-primary button{width:58px;height:58px;font-size:9px}
   #touch.quality-touch .touch-primary .smack{width:68px;height:68px;font-size:11px}
   #touch.quality-touch .touch-pause{width:38px;height:38px}
 }
 
 @media(max-width:620px){
-  .touch-dpad{
+  #touch.quality-touch .touch-dpad{
     grid-template-columns:repeat(3,46px);
     grid-template-rows:repeat(3,46px);
   }
-  .touch-dpad button{width:46px;height:46px}
+  #touch.quality-touch .touch-dpad button{width:46px;height:46px}
   #touch.quality-touch .touch-primary{gap:5px}
   #touch.quality-touch .touch-primary button{width:54px;height:54px}
   #touch.quality-touch .touch-primary .smack{width:64px;height:64px}
