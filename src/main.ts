@@ -191,6 +191,7 @@ game.events.on('hud',(s:any)=>{
   q('#act').textContent=s.stageData.act;
   q('#venue').textContent=s.stageData.name;
   q('#wave').textContent=s.progress?`${s.progress.label} • ${s.progress.current}/${s.progress.total}`:`ROUTE ${s.wave+1}`;
+  if(s.progress)q<HTMLElement>('#route-bar').style.width=`${Math.round(s.progress.distance*100)}%`;
   const combo=q('#combo');
   combo.innerHTML=`${s.combo}× <small>${s.combo>8?'ABSOLUTE FILTH':s.combo>4?'DISGUSTING':'FILTHY'}</small>`;
   combo.classList.toggle('gone',s.combo<2);
