@@ -21,8 +21,8 @@
       <p class="lede">FOUR VENUES. ONE COOKED NIGHT. ABSOLUTELY NO PERSONAL GROWTH.</p>
       <div id="difficulty"><span>BAD-DECISION LEVEL</span><button class="diff" data-diff="messy">MESSY</button><button class="diff active" data-diff="cooked">COOKED</button><button class="diff" data-diff="unhinged">UNHINGED</button><button class="diff feral" data-diff="feral">FERAL</button></div>
       <p id="difficulty-copy" aria-live="polite">THE INTENDED BAD DECISION. NORMAL DAMAGE, NORMAL HAZARDS, NORMAL REGRET.</p>
-      <div class="menu-actions"><button id="start">ENTER THOT CITY</button><button id="how" class="secondary">HOW TO SURVIVE</button><button id="cast" class="secondary">MEET THE PROBLEMS</button><button id="cinema" class="secondary">AFTER-HOURS CUTS</button></div>
-      <p class="keys"><b>MOVE</b> A/D　<b>JUMP</b> W/SPACE　<b>SMACK</b> J　<b>HEAVY</b> H　<b>DASH</b> SHIFT　<b>PACKET</b> K　<b>PIGEON</b> L　<b>MAKE IT RAIN</b> T　<b>PAUSE</b> ESC</p>
+      <div class="menu-actions"><button id="start">PLAY PINK PIGEON REBUILD</button><button id="how" class="secondary">HOW TO SURVIVE</button><button id="cast" class="secondary">MEET THE PROBLEMS</button><button id="cinema" class="secondary">AFTER-HOURS CUTS</button></div>
+      <p class="keys"><b>MOVE</b> WASD / ARROWS　<b>SMACK</b> J　<b>HARD</b> H　<b>DASH</b> SHIFT　<b>PAUSE</b> ESC</p>
       <p id="best"></p>
       <p id="rap-sheet"></p>
     </section>
@@ -40,11 +40,16 @@
         <div class="cutscene-actions"><button id="cutscene-next">NEXT INDISCRETION</button><button id="cutscene-tip">TIP THE STAGE $20</button><button id="cutscene-skip">SKIP THE FOREPLAY</button></div>
       </article>
     </section>
-    <nav id="touch" class="gone" aria-label="Touch controls">
-      <div class="touch-move"><button data-action="left" aria-label="Move left">◀</button><button data-action="right" aria-label="Move right">▶</button><button data-action="jump" aria-label="Jump">↑</button></div>
+    <nav id="touch" class="gone quality-touch" aria-label="Touch controls">
+      <div class="touch-dpad" aria-label="Movement">
+        <button class="d-up" data-action="up" aria-label="Move up">▲</button>
+        <button class="d-left" data-action="left" aria-label="Move left">◀</button>
+        <button class="d-right" data-action="right" aria-label="Move right">▶</button>
+        <button class="d-down" data-action="down" aria-label="Move down">▼</button>
+      </div>
       <div class="touch-combat">
-        <div class="touch-secondary"><button data-action="rain">$$$</button><button data-action="packet">BAG</button><button data-action="pigeon">BIRD</button><button data-action="pause">PAUSE</button></div>
-        <div class="touch-primary"><button data-action="dash">DASH</button><button data-action="hit">SMACK</button><button data-action="heavy">HARD</button></div>
+        <button class="touch-pause" data-action="pause" aria-label="Pause">II</button>
+        <div class="touch-primary"><button data-action="dash">DASH</button><button data-action="heavy">HARD</button><button class="smack" data-action="hit">SMACK</button></div>
       </div>
     </nav>
     <button id="mute" aria-label="Toggle audio">♪</button>
