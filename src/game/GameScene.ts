@@ -98,6 +98,7 @@ export class GameScene extends Phaser.Scene{
   }
 
   create(){
+    this.createAnimations();
     this.physics.world.gravity.y=0;
     this.physics.world.setBounds(0,FLOOR_TOP,WORLD_W,FLOOR_BOTTOM-FLOOR_TOP);
     this.cameras.main.setBounds(0,0,WORLD_W,720).setBackgroundColor('#090509');
