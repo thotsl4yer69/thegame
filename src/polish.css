@@ -1201,3 +1201,97 @@ body.campaign-active #marquee{opacity:0}
   .cutscene-mirror{height:72%;width:210px;top:8%}
   .cutscene-curtain{width:20%}
 }
+
+
+/* === V4 MELBOURNE STORY MODE === */
+.melbourne-map{
+  min-height:100%;
+  padding:max(26px,env(safe-area-inset-top)) max(18px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left));
+  color:#fff;
+  background:
+    radial-gradient(circle at 48% 38%,#ff269c1c,transparent 34%),
+    radial-gradient(circle at 72% 60%,#19ead814,transparent 31%),
+    linear-gradient(180deg,#050207,#110713 55%,#030103);
+}
+.melbourne-map>header{text-align:center}
+.melbourne-map>header small{color:var(--cyan);font:10px 'Black Ops One',Impact,sans-serif;letter-spacing:4px}
+.melbourne-map>header h1{margin:4px 0 2px;font:clamp(34px,6vw,68px)/.92 'Black Ops One',Impact,sans-serif;text-shadow:4px 4px var(--pink)}
+.melbourne-map>header p{margin:5px 0 10px;color:#ffd8ef;font-size:13px;letter-spacing:1.5px}
+
+.melbourne-route{
+  position:relative;
+  width:min(1120px,95vw);
+  height:310px;
+  margin:0 auto 10px;
+  overflow:hidden;
+  border:2px solid #5c3150;
+  box-shadow:9px 9px #000,0 0 38px #ff269c22;
+  background:
+    repeating-linear-gradient(15deg,transparent 0 43px,#ffffff07 44px 45px),
+    linear-gradient(135deg,#071319,#18071a 48%,#090309);
+}
+.melbourne-route::before{content:'MELBOURNE';position:absolute;right:24px;bottom:5px;color:#ffffff0a;font:86px 'Black Ops One',Impact,sans-serif;transform:rotate(-4deg)}
+.melbourne-route .river{
+  position:absolute;z-index:0;left:-5%;right:-5%;top:53%;height:54px;
+  background:linear-gradient(180deg,#0a4e6288,#13839c44,#061d2588);
+  transform:rotate(-5deg);box-shadow:0 0 28px #19ead833;
+}
+.melbourne-route .route-line{
+  position:absolute;z-index:1;left:8%;right:7%;top:48%;height:8px;
+  background:linear-gradient(90deg,var(--pink),#8a35ff,var(--cyan),var(--gold),#ff7849);
+  box-shadow:0 0 14px #ff269c88;transform:rotate(-3deg);
+}
+.melbourne-route .tram-line{
+  position:absolute;right:8px;top:8px;width:34px;height:34px;border-radius:50%;
+  display:grid;place-items:center;background:#ff5b30;color:#fff;border:2px solid #fff;
+  font:13px 'Black Ops One',Impact,sans-serif;box-shadow:3px 3px #000;
+}
+.melbourne-route .map-node{
+  width:145px;height:82px;padding:8px;display:block;overflow:visible;
+  background:#090509e8;border:2px solid #784567;box-shadow:5px 5px #000;
+  transform:translate(-50%,-50%) rotate(-2deg);
+}
+.melbourne-route .map-node span{width:22px;height:22px;font-size:10px}
+.melbourne-route .map-node b{position:static;display:block;margin-top:25px;color:#fff;font:10px 'Black Ops One',Impact,sans-serif;line-height:1}
+.melbourne-route .map-node small{position:static;display:block;margin-top:5px;color:var(--cyan);font-size:7px;line-height:1}
+.melbourne-route .map-node.complete{border-color:var(--cyan);opacity:.8}
+.melbourne-route .map-node.current{border-color:var(--gold);box-shadow:6px 6px var(--pink),0 0 24px #ffd22966;transform:translate(-50%,-50%) rotate(2deg) scale(1.08)}
+.melbourne-route .map-node.locked{opacity:.32;filter:grayscale(.8)}
+.melbourne-route .m0{left:10%;top:68%}
+.melbourne-route .m1{left:27%;top:34%}
+.melbourne-route .m2{left:44%;top:67%}
+.melbourne-route .m3{left:61%;top:31%}
+.melbourne-route .m4{left:78%;top:65%}
+.melbourne-route .m5{left:91%;top:30%}
+
+.salem-interlude{
+  position:relative;min-height:100%;overflow:hidden;display:flex;align-items:flex-end;
+  padding:34px;background:linear-gradient(90deg,#050206f3 0%,#090308c0 48%,#05020655 100%);
+}
+.salem-interlude::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 72% 36%,#8a35ff2c,transparent 30%),linear-gradient(135deg,#12081f,#030204 58%);
+}
+.salem-interlude img{
+  position:absolute;right:2%;bottom:-7%;height:104%;max-width:54%;object-fit:cover;object-position:18% 10%;
+  filter:drop-shadow(0 18px 26px #000e) drop-shadow(0 0 22px #8a35ff66);
+}
+.salem-card{
+  position:relative;z-index:3;width:min(660px,60vw);padding:22px;
+  border-left:8px solid #8a35ff;background:linear-gradient(135deg,#09050ef4,#261038ea);
+  box-shadow:12px 12px #000c,0 0 35px #8a35ff33;
+}
+.salem-card small{color:var(--cyan);font:9px 'Black Ops One',Impact,sans-serif;letter-spacing:2px}
+.salem-card h2{margin:6px 0;color:#ff8bc8;font:clamp(34px,5vw,64px) 'Black Ops One',Impact,sans-serif;text-shadow:3px 3px #000}
+.salem-card p{color:#fff0f7;font-size:16px;line-height:1.35}
+.salem-card button{margin-top:12px}
+
+@media(max-height:500px){
+  .melbourne-map{padding:9px 12px}
+  .melbourne-map>header h1{font-size:31px}.melbourne-map>header p{display:none}
+  .melbourne-route{height:185px;margin-bottom:5px}
+  .melbourne-route .map-node{width:112px;height:62px;padding:5px}
+  .melbourne-route .map-node b{margin-top:20px;font-size:8px}.melbourne-route .map-node small{font-size:6px}
+  .melbourne-route .route-line{height:5px}
+  .salem-interlude{padding:12px}.salem-card{width:61vw;padding:12px}.salem-card p{font-size:11px}.salem-card h2{font-size:34px}
+}
