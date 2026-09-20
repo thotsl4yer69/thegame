@@ -25,6 +25,8 @@ export type CampaignState={
 
 const KEY='ts69-campaign-v3';
 const clamp=(n:number,min=0,max=100)=>Math.max(min,Math.min(max,n));
+const mergeReward=(a:CampaignReward={},b:CampaignReward={}):CampaignReward=>({hp:(a.hp??0)+(b.hp??0),high:(a.high??0)+(b.high??0),cash:(a.cash??0)+(b.cash??0),packets:(a.packets??0)+(b.packets??0)});
+
 const fresh=():CampaignState=>({
   night:1,rizz:24,heat:4,debt:0,thot:18,
   chemistry:{roxi:0,viper:0,bianca:0},
@@ -157,27 +159,27 @@ export class CampaignDirector{
       });
     });
   }
-  private async sideStory(stage:number){
-    const side=SIDE_STORIES.find(item=>item.afterStage===stage&&!this.state.sideStories.includes(item.id)&&item.requires(this.state));if(!side)return;
-    await new Promise<void>(resolve=>{
+  private async sideStory(stage:number):Promise<CampaignReward>{
+    const side=SIDE_STORIES.find(item=>item.afterStage===stage&&!this.state.sideStories.includes(item.id)&&item.requires(this.state));if(!side)return {};
+    return new Promise<CampaignReward>(resolve=>{
       this.root.innerHTML=`<div class="side-story"><div><small>OPTIONAL BAD DECISION</small><h2>${side.title}</h2><h3>${side.subtitle}</h3><p>${side.copy}</p><div class="story-choices">${side.choices.map((choice,i)=>`<button data-side="${i}"><b>${choice.label}</b></button>`).join('')}</div><button id="skip-side" class="secondary">MIRACULOUSLY SAY NO</button></div></div>`;
       this.root.querySelectorAll<HTMLButtonElement>('[data-side]').forEach(button=>button.onclick=()=>{
         const choice=side.choices[Number(button.dataset.side)];applyEffects(this.state,choice.effects);this.state.sideStories.push(side.id);this.save();
         this.root.innerHTML=`<div class="side-story"><div><small>${side.title}</small><h2>SIDE STORY COMPLETE</h2><p>${choice.response}</p>${this.statsHtml()}<button id="side-done">BACK TO THOT CITY</button></div></div>`;
-        (this.root.querySelector('#side-done') as HTMLButtonElement).onclick=()=>resolve();
+        (this.root.querySelector('#side-done') as HTMLButtonElement).onclick=()=>resolve(choice.reward);
       });
-      (this.root.querySelector('#skip-side') as HTMLButtonElement).onclick=()=>resolve();
+      (this.root.querySelector('#skip-side') as HTMLButtonElement).onclick=()=>resolve({});
     });
   }
   async chooseRoute(stage:number):Promise<RouteOption>{
-    const sideStage=stage-1;if(sideStage>=0){this.root.classList.remove('gone');document.body.classList.add('campaign-active');await this.sideStory(sideStage)}
+    const sideStage=stage-1;let sideReward:CampaignReward={};if(sideStage>=0){this.root.classList.remove('gone');document.body.classList.add('campaign-active');sideReward=await this.sideStory(sideStage)}
     const options=ROUTES[stage]??ROUTES[0];
     return new Promise(resolve=>{
       this.root.classList.remove('gone');document.body.classList.add('campaign-active');
       const nodes=VENUES.map((venue,i)=>`<div class="map-node n${i} ${i<stage?'complete':i===stage?'current':'locked'}"><span>${i+1}</span><img src="${venue.image}" alt=""><b>${venue.name}</b><small>${venue.tag}</small></div>`).join('');
       this.root.innerHTML=`<div class="worldmap-shell"><header><small>NIGHT ${this.state.night} • THOT CITY</small><h1>WHERE TO NEXT?</h1><p>Different door. Same terrible judgment.</p></header><div class="map-city"><div class="map-road r1"></div><div class="map-road r2"></div><div class="map-road r3"></div>${nodes}<div class="secret-node">★<b>PLEASURE PIER</b><small>side stories</small></div></div>${this.statsHtml()}<section class="route-picker"><h2>${VENUES[stage].name}</h2><div class="route-options">${options.map((route,i)=>{const allowed=this.allowed(route);return `<button data-route="${i}" class="${allowed?'':'locked'}" ${allowed?'':'disabled'}><small>THREAT ${'●'.repeat(route.threat+1)}${'○'.repeat(2-route.threat)}</small><b>${route.label}</b><em>${route.subtitle}</em><span>${route.flavour}</span>${route.requires&&!allowed?`<strong>LOCKED • ${route.requires.label}</strong>`:''}</button>`}).join('')}</div></section></div>`;
       this.root.querySelectorAll<HTMLButtonElement>('[data-route]').forEach(button=>button.onclick=()=>{
-        const route=options[Number(button.dataset.route)];if(!this.allowed(route))return;applyEffects(this.state,route.effects);this.state.routes[String(stage)]=route.id;this.save();this.close();resolve(route);
+        const route=options[Number(button.dataset.route)];if(!this.allowed(route))return;applyEffects(this.state,route.effects);this.state.routes[String(stage)]=route.id;this.save();this.close();resolve({...route,reward:mergeReward(sideReward,route.reward)});
       });
     });
   }
