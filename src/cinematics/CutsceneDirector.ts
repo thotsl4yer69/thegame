@@ -18,20 +18,20 @@ type Cutscene={
 export const CUTSCENES:readonly Cutscene[]=[
   {
     id:0,
-    kicker:'ACT I AFTER HOURS',
-    title:'VELVET WARNING',
-    location:'THE PINK PIGEON • PRIVATE BOOTH',
+    kicker:'ACT I • BACKSTAGE • 1:38AM',
+    title:'BACKSTAGE DAMAGE',
+    location:'THE PINK PIGEON • DRESSING ROOMS / PRIVATE BOOTHS',
     background:'assets/backgrounds/pink-pigeon.webp',
     leadName:'ROXI REDLINE',
     leadRow:0,
     jackRow:0,
     accent:'#ff269c',
-    debauchery:69,
+    debauchery:74,
     beats:[
-      {speaker:'ROXI REDLINE',shot:'lead',jackPose:1,leadPose:2,stamp:'VIP ACCESS: QUESTIONABLE',line:'You bought the VIP booth, ordered tap water, and have not looked at my face once. Babe, at least lie to me professionally.'},
-      {speaker:'JACK',shot:'jack',jackPose:2,leadPose:2,stamp:'OBSTRUCTION OF JUSTICE',line:'I am investigating. Your outfit is obstructing justice.'},
-      {speaker:'ROXI REDLINE',shot:'intimate',jackPose:3,leadPose:3,stamp:'PERSONAL SPACE: CANCELLED',line:'Eyes up, hero. Viper has the name you want. Ask nicely and maybe I stop sitting this close.'},
-      {speaker:'PINK PIGEON',shot:'wide',jackPose:4,leadPose:4,stamp:'$20 POORER • 0% WISER',line:'Roxi crosses one lacquered thigh over his escape route, steals his collar and twenty bucks. Jack files absolutely no complaint.'}
+      {speaker:'ROXI REDLINE',shot:'lead',jackPose:1,leadPose:2,stamp:'DRESSING ROOMS • STAFF ONLY',line:'You wrecked my velvet rope, put Chad through half the furniture, and still found time to stare at my arse. Efficient.'},
+      {speaker:'JACK',shot:'jack',jackPose:2,leadPose:2,stamp:'BLOOD • GLITTER • BAD ALIBI',line:'I was checking for injuries. Very thorough risk assessment.'},
+      {speaker:'ROXI REDLINE',shot:'intimate',jackPose:3,leadPose:3,stamp:'PRIVATE BOOTH • CASH FIRST',line:'Bullshit. Keep looking. Just know the private booth charges by the hour and I charge by how annoying you are.'},
+      {speaker:'PINK PIGEON',shot:'wide',jackPose:4,leadPose:4,stamp:'LIPSTICK ON COLLAR • KEY IN POCKET',line:'Roxi hooks one finger through his belt, pulls him close enough to ruin his concentration, then slips Viper’s key into his pocket. “Back alley. Two-fifteen. Try not to smell like another girl when you get there.”'}
     ]
   },
   {
@@ -142,6 +142,7 @@ export class CutsceneDirector{
     this.beat=0;
     this.tipTotal=0;
     this.root.style.setProperty('--cut-accent',this.current.accent);
+    this.root.dataset.scene=String(this.current.id);
     this.root.classList.remove('gone');
     document.body.classList.add('cutscene-active');
     this.query('#cutscene-kicker').textContent=this.current.kicker;
@@ -197,7 +198,19 @@ export class CutsceneDirector{
       fx.append(spark);
     }
 
-    frame.append(bg,wash,jack,lead,fx);
+    const set=document.createElement('div');
+    set.className=`cutscene-set cutscene-set-${this.current.id}`;
+    if(this.current.id===0){
+      set.innerHTML='<span class="cutscene-neon-sign">DRESSING ROOMS</span><i class="cutscene-mirror"></i><i class="cutscene-pole"></i><i class="cutscene-curtain"></i><span class="cutscene-backstage-tag">STAFF ONLY • PRIVATE BOOTHS →</span>';
+    }else if(this.current.id===1){
+      set.innerHTML='<span class="cutscene-neon-sign">BACK DOOR</span><i class="cutscene-smoke"></i><span class="cutscene-backstage-tag">NO CAMERAS • NO RECEIPTS</span>';
+    }else if(this.current.id===2){
+      set.innerHTML='<span class="cutscene-neon-sign">HIGH LIMIT</span><i class="cutscene-gold-rail"></i><span class="cutscene-backstage-tag">HOUSE CREDIT • BAD TERMS</span>';
+    }else{
+      set.innerHTML='<span class="cutscene-neon-sign">5:58 AM</span><i class="cutscene-dawn"></i><span class="cutscene-backstage-tag">MAKEUP SMEARED • DIGNITY OPTIONAL</span>';
+    }
+
+    frame.append(bg,wash,set,jack,lead,fx);
     this.stage.append(frame);
     this.bg=bg;
     this.jack=jack;
@@ -253,8 +266,8 @@ export class CutsceneDirector{
     this.query('#cutscene-stamp').textContent=this.tipTotal>=100?'FINANCIAL DOMINATION: ACHIEVED':'MAKE IT RAIN: ACTIVE';
     this.query('#cutscene-index').textContent=`DEBAUCHERY ${Math.min(100,(this.current?.debauchery??69)+Math.floor(this.tipTotal/20)*4)}%`;
     this.query('#cutscene-line').textContent=this.tipTotal>=100
-      ?'Roxi pockets the cash, blows Jack a kiss and tells security to keep the idiot hydrated. The rail loses its collective mind.'
-      :'Roxi snatches the note out of the air, turns slow enough to bankrupt common sense, and mouths “again” at Jack.';
+      ?'Roxi folds the notes into her garter, plants a lipstick print on Jack’s collar and tells security he is officially someone else’s problem. The dressing room erupts.'
+      :'Roxi catches the note against one thigh, tucks it away without breaking eye contact, and says, “That bought you ten more seconds of confidence. Spend them badly.”';
     this.lead?.classList.remove('tip-pop');
     if(this.lead){void this.lead.offsetWidth;this.lead.classList.add('tip-pop')}
     this.cashBurst();
@@ -280,6 +293,7 @@ export class CutsceneDirector{
   private finish(){
     if(this.root.classList.contains('gone')&&!this.resolve)return;
     this.root.classList.add('gone');
+    delete this.root.dataset.scene;
     document.body.classList.remove('cutscene-active');
     this.current=undefined;
     this.stage.removeAttribute('data-shot');
