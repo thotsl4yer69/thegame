@@ -967,3 +967,113 @@ body.campaign-active #marquee{opacity:0}
   .story-card .campaign-stats{justify-content:flex-start;width:100%}.story-card .campaign-stats span{min-width:70px}
   .side-story>div{padding:15px}.side-story h2{font-size:38px}.side-story p{font-size:12px}
 }
+
+
+/* === PLAYABILITY-FIRST MOBILE CONTROLS === */
+#touch.quality-touch{
+  position:absolute;
+  z-index:70;
+  left:max(12px,env(safe-area-inset-left));
+  right:max(12px,env(safe-area-inset-right));
+  bottom:max(10px,env(safe-area-inset-bottom));
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  pointer-events:none;
+}
+#touch.quality-touch.gone{display:none}
+#touch.quality-touch button{
+  pointer-events:auto;
+  touch-action:none;
+  user-select:none;
+  -webkit-user-select:none;
+  -webkit-tap-highlight-color:transparent;
+  color:#fff;
+  background:#090509c9;
+  border:2px solid #ffffff6e;
+  box-shadow:3px 3px #000a;
+  font-family:'Black Ops One',Impact,sans-serif;
+  font-weight:400;
+  opacity:.9;
+}
+#touch.quality-touch button:active{
+  transform:translateY(2px) scale(.96);
+  background:#ff269cd9;
+  border-color:#fff;
+  box-shadow:1px 1px #0008,0 0 14px #ff269caa;
+}
+.touch-dpad{
+  display:grid;
+  grid-template-columns:repeat(3,56px);
+  grid-template-rows:repeat(3,56px);
+  gap:3px;
+  pointer-events:none;
+}
+.touch-dpad button{
+  width:56px;
+  height:56px;
+  border-radius:14px;
+  font-size:20px;
+}
+.touch-dpad .d-up{grid-column:2;grid-row:1}
+.touch-dpad .d-left{grid-column:1;grid-row:2}
+.touch-dpad .d-right{grid-column:3;grid-row:2}
+.touch-dpad .d-down{grid-column:2;grid-row:3}
+
+#touch.quality-touch .touch-combat{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:8px;
+  pointer-events:none;
+}
+#touch.quality-touch .touch-primary{
+  display:flex;
+  align-items:flex-end;
+  gap:8px;
+}
+#touch.quality-touch .touch-primary button{
+  width:66px;
+  height:66px;
+  border-radius:50%;
+  font-size:10px;
+}
+#touch.quality-touch .touch-primary .smack{
+  width:78px;
+  height:78px;
+  color:#090509;
+  background:#ffd229e8;
+  border-color:#fff;
+  font-size:12px;
+  box-shadow:4px 4px #ff269caa;
+}
+#touch.quality-touch .touch-pause{
+  width:42px;
+  height:42px;
+  border-radius:12px;
+  font-size:11px;
+  opacity:.7;
+}
+
+@media(max-height:500px){
+  .touch-dpad{
+    grid-template-columns:repeat(3,48px);
+    grid-template-rows:repeat(3,48px);
+    gap:2px;
+  }
+  .touch-dpad button{width:48px;height:48px;border-radius:12px;font-size:17px}
+  #touch.quality-touch .touch-primary button{width:58px;height:58px;font-size:9px}
+  #touch.quality-touch .touch-primary .smack{width:68px;height:68px;font-size:11px}
+  #touch.quality-touch .touch-pause{width:38px;height:38px}
+}
+
+@media(max-width:620px){
+  .touch-dpad{
+    grid-template-columns:repeat(3,46px);
+    grid-template-rows:repeat(3,46px);
+  }
+  .touch-dpad button{width:46px;height:46px}
+  #touch.quality-touch .touch-primary{gap:5px}
+  #touch.quality-touch .touch-primary button{width:54px;height:54px}
+  #touch.quality-touch .touch-primary .smack{width:64px;height:64px}
+}
