@@ -271,7 +271,7 @@ document.querySelectorAll<HTMLButtonElement>('#touch [data-action]').forEach(but
   const action=button.dataset.action!;
   button.addEventListener('pointerdown',event=>{
     event.preventDefault();
-    button.setPointerCapture?.(event.pointerId);
+    try{button.setPointerCapture?.(event.pointerId)}catch{}
     vibrate(action==='hit'||action==='heavy'?14:8);
     game.events.emit('touch',action,true);
   });
