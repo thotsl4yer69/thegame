@@ -7,7 +7,7 @@ import './style.css';
 import './polish.css';
 import {GameScene} from './game/GameScene';
 import {FilthyAudio} from './game/audio';
-import {UPGRADES} from './game/data';
+import {CHAPTERS} from './game/chapters';
 import {achievementCount,bestScore,formatTime,rankRun,readGallery,readStats,recordRun} from './game/progression';
 import {CutsceneDirector,CutsceneId} from './cinematics/CutsceneDirector';
 import {CampaignDirector,type CampaignReward} from './game/campaign';
@@ -55,6 +55,13 @@ const DIFFICULTY_COPY:Record<string,string>={
   feral:'NO ALIBI MODE. 55% TOUGHER ENEMIES, 48% HARDER HITS, RELENTLESS HAZARDS, 2.25× SCORE.'
 };
 
+const CAMPAIGN_UPGRADES=[
+  {id:'power',name:'HEAVY HANDS',desc:'+16% damage for the rest of the night.'},
+  {id:'speed',name:'SECOND WIND',desc:'+8% movement speed. Melbourne keeps moving.'},
+  {id:'meat',name:'THICK SKIN',desc:'+18 max MEAT and heal 28 immediately.'},
+  {id:'high',name:'BAD INFLUENCE',desc:'+35 HIGH immediately. Start the next district messy.'}
+] as const;
+
 function renderTitleStats(){
   const stats=readStats();
   q('#best').textContent=`PERSONAL WORST: ${bestScore().toLocaleString()} POINTS • ${achievementCount()}/8 DEGENERACIES UNLOCKED`;
@@ -89,8 +96,11 @@ function closeModal(){modal.classList.add('gone');modal.innerHTML=''}
 function mergeRewards(...rewards:CampaignReward[]):CampaignReward{return rewards.reduce((out,reward)=>({hp:(out.hp??0)+(reward.hp??0),high:(out.high??0)+(reward.high??0),cash:(out.cash??0)+(reward.cash??0),packets:(out.packets??0)+(reward.packets??0)}),{} as CampaignReward)}
 async function beginRun(){
   audio.start();
+  campaign.newNight();
   overlay.classList.add('gone');
-  scene.setCampaignRoute('QUALITY SLICE',0,{});
+  const route=await campaign.chooseRoute(0);
+  scene.setChapter(0);
+  scene.setCampaignRoute(route.label,route.threat,route.reward);
   document.body.classList.add('game-active');
   hud.classList.remove('gone');
   touch.classList.remove('gone');
@@ -208,20 +218,21 @@ game.events.on('hud',(s:any)=>{
     q<HTMLElement>('#boss-bar').style.width=`${Math.max(0,s.boss.hp/s.boss.max*100)}%`;
   }
 });
-game.events.on('upgrade',async({stage,choices,choose,stageStats}:any)=>{
-  hud.classList.add('gone');touch.classList.add('gone');
+game.events.on('chapterComplete',async({chapter,chapterData,stageStats}:any)=>{
+  hud.classList.add('gone');touch.classList.add('gone');audio.pause(true);
   campaign.recordPerformance(stageStats);
-  await cutscenes.play(stage as CutsceneId);
-  const storyReward=await campaign.storyBeat(stage);
-  modal.innerHTML=`<div class="age">ACT SURVIVED • CHOOSE YOUR NEXT DISORDER</div><h2>DEGENERATE UPGRADE</h2><div class="choices">${choices.map((u:(typeof UPGRADES)[number])=>`<button class="choice" data-id="${u.id}"><b>${u.name}</b><small>${u.desc}</small></button>`).join('')}</div>`;
+  await cutscenes.play(chapterData.cutsceneId as CutsceneId);
+  modal.innerHTML=`<div class="age">${chapterData.district} • CHAPTER CLEARED</div><h2>CHOOSE WHAT THE NIGHT TAUGHT YOU</h2><div class="choices">${CAMPAIGN_UPGRADES.map(u=>`<button class="choice" data-upgrade="${u.id}"><b>${u.name}</b><small>${u.desc}</small></button>`).join('')}</div>`;
   modal.classList.remove('gone');
-  modal.querySelectorAll<HTMLButtonElement>('[data-id]').forEach(button=>button.onclick=async()=>{
-    const upgradeId=button.dataset.id!;
+  modal.querySelectorAll<HTMLButtonElement>('[data-upgrade]').forEach(button=>button.onclick=async()=>{
+    const upgrade=button.dataset.upgrade!;
+    scene.applyUpgrade(upgrade);
     closeModal();
-    const route=await campaign.chooseRoute(stage+1);
-    scene.setCampaignRoute(route.label,route.threat,mergeRewards(storyReward,route.reward));
-    choose(upgradeId);
-    hud.classList.remove('gone');touch.classList.remove('gone');
+    const nextChapter=chapter+1;
+    const route=await campaign.chooseRoute(nextChapter);
+    scene.setCampaignRoute(route.label,route.threat,route.reward);
+    hud.classList.remove('gone');touch.classList.remove('gone');audio.pause(false);
+    scene.startChapter(nextChapter,route.reward);
   });
 });
 game.events.on('pause',(payload?:{resume?:()=>void})=>{
@@ -239,23 +250,20 @@ game.events.on('gameover',({score,stage,kills,damage,difficulty:runDifficulty,re
   touch.classList.add('gone');
   const rank=rankRun(score,false);
   const stats=recordRun({score,kills,damage,cleared:false});
-  modal.innerHTML=`<div class="age">RUN TERMINATED • ${runDifficulty}</div><div class="night-rating">NIGHT RATING <b>${rank}</b></div><h2>ABSOLUTELY FUCKED IT</h2><p>You reached ${stage+1}/4 venues and scraped together <b>${score.toLocaleString()}</b> points.</p><p class="stats">PROBLEMS DROPPED ${kills}　•　MEAT LOST ${Math.round(damage)}　•　CAREER RUNS ${stats.runs}</p><div class="menu-actions"><button id="retry">MAKE THE SAME MISTAKES AGAIN</button><button id="title" class="secondary">TITLE + DOSSIERS</button></div>`;
+  modal.innerHTML=`<div class="age">RUN TERMINATED • ${runDifficulty}</div><div class="night-rating">NIGHT RATING <b>${rank}</b></div><h2>ABSOLUTELY FUCKED IT</h2><p>You reached ${stage+1}/${CHAPTERS.length} Melbourne chapters and scraped together <b>${score.toLocaleString()}</b> points.</p><p class="stats">PROBLEMS DROPPED ${kills}　•　MEAT LOST ${Math.round(damage)}　•　CAREER RUNS ${stats.runs}</p><div class="menu-actions"><button id="retry">MAKE THE SAME MISTAKES AGAIN</button><button id="title" class="secondary">TITLE + DOSSIERS</button></div>`;
   modal.classList.remove('gone');
   q('#retry').onclick=()=>location.reload();
   q('#title').onclick=()=>location.reload();
 });
-game.events.on('ending',async({score,cash,best,kills,damage,seconds,difficulty:runDifficulty}:any)=>{
-  audio.pause(true);
-  hud.classList.add('gone');
-  touch.classList.add('gone');
-  await cutscenes.play(0);
-  const time=formatTime(seconds);
-  const rank=rankRun(score,true);
+game.events.on('ending',async({score,cash,best,kills,damage,seconds,stageStats,difficulty:runDifficulty}:any)=>{
+  audio.pause(true);hud.classList.add('gone');touch.classList.add('gone');
+  campaign.recordPerformance(stageStats);
+  await cutscenes.play(CHAPTERS[CHAPTERS.length-1].cutsceneId as CutsceneId);
+  const result=campaign.getEnding(),summary=campaign.summary(),time=formatTime(seconds),rank=rankRun(score,true);
   recordRun({score,kills,damage,cleared:true,seconds});
-  modal.innerHTML=`<div class="age">PINK PIGEON QUALITY SLICE • ${runDifficulty}</div><div class="night-rating">COMBAT RATING <b>${rank}</b></div><h1>SLICE<br><span>CLEARED</span></h1><h2>THIS IS THE GATE, NOT THE FINISH LINE.</h2><p>The rebuild stops here deliberately. If this combat and movement are not good enough, nothing else gets expanded.</p><p class="stats">SCORE ${score.toLocaleString()}　•　CASH $${cash}　•　BEST ${best.toLocaleString()}<br>PROBLEMS ${kills}　•　MEAT LOST ${Math.round(damage)}　•　TIME ${time}</p><div class="menu-actions"><button id="retry">RUN THE SLICE AGAIN</button><button id="title" class="secondary">BACK TO TITLE</button></div>`;
+  modal.innerHTML=`<div class="age">${result.subtitle} • ${runDifficulty}</div><div class="night-rating">MELBOURNE RATING <b>${rank}</b></div><h1>${result.title}</h1><p>${result.copy}</p><p class="stats">RIZZ ${summary.rizz} • HEAT ${summary.heat} • DEBT $${summary.debt} • THOT ${summary.thot}%<br>SCORE ${score.toLocaleString()} • CASH $${cash} • BEST ${best.toLocaleString()}<br>PROBLEMS ${kills} • MEAT LOST ${Math.round(damage)} • TIME ${time}</p><div class="menu-actions"><button id="retry">ANOTHER NIGHT</button><button id="title" class="secondary">TITLE + DOSSIERS</button></div>`;
   modal.classList.remove('gone');
-  q('#retry').onclick=()=>location.reload();
-  q('#title').onclick=()=>location.reload();
+  q('#retry').onclick=()=>location.reload();q('#title').onclick=()=>location.reload();
 });
 
 async function cacheReleaseAssets(){
