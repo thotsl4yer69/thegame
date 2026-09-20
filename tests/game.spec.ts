@@ -52,12 +52,13 @@ test('desktop player journey covers difficulty, help, combat, pause and persiste
   await page.locator('#start').click();
   await expect(page.locator('#hud')).not.toHaveClass(/gone/);
   await expect(page.locator('canvas')).toBeVisible();
-  await expect(page.locator('#wave')).toHaveText('WAVE 1/3');
+  await expect(page.locator('#wave')).toContainText('ADVANCE');
   await page.waitForTimeout(2400);
 
   await page.keyboard.down('KeyD');
-  await page.waitForTimeout(350);
+  await page.waitForTimeout(2100);
   await page.keyboard.up('KeyD');
+  await expect(page.locator('#wave')).toContainText('/4');
   await page.keyboard.press('KeyJ');
   await page.keyboard.press('KeyH');
   await page.keyboard.press('KeyK');
