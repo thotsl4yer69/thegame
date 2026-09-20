@@ -46,10 +46,10 @@ export const CUTSCENES:readonly Cutscene[]=[
     accent:'#19ead8',
     debauchery:78,
     beats:[
-      {speaker:'VIPER VICE',shot:'lead',jackPose:1,leadPose:2,stamp:'ALLEY PRIVILEGES REVOKED',line:'Roxi says you survived the booth without proposing marriage. Barely. That is almost attractive.'},
-      {speaker:'JACK',shot:'jack',jackPose:2,leadPose:2,stamp:'HR WOULD LIKE A WORD',line:'Operational discipline. Mostly above the belt.'},
-      {speaker:'VIPER VICE',shot:'intimate',jackPose:3,leadPose:3,stamp:'SAFE WORD: BAD DECISION',line:'Keep talking like that and I will make you earn the key the embarrassing way. Bianca owns the casino, the debt and your next bad idea.'},
-      {speaker:'CITY CCTV',shot:'wide',jackPose:4,leadPose:4,stamp:'PULSE: UNPROFESSIONAL',line:'She slides the key inside his jacket, lets one finger linger at the lapel, then leaves him arguing with his own pulse.'}
+      {speaker:'VIPER VICE',shot:'lead',jackPose:1,leadPose:2,stamp:'ALLEY PRIVILEGES REVOKED',line:'Roxi says you left with lipstick on your collar, somebody else’s cash in your pocket, and enough ego to survive the walk here. That is almost a résumé.'},
+      {speaker:'JACK',shot:'jack',jackPose:2,leadPose:2,stamp:'HR WOULD LIKE A WORD',line:'You sound jealous.'},
+      {speaker:'VIPER VICE',shot:'intimate',jackPose:3,leadPose:3,stamp:'SAFE WORD: BAD DECISION',line:'Jealous girls throw drinks. I use leverage. Bianca owns the casino, the cameras and half the people pretending not to watch us. Keep talking and I may charge you interest before she does.'},
+      {speaker:'CITY CCTV',shot:'wide',jackPose:4,leadPose:4,stamp:'PULSE: UNPROFESSIONAL',line:'Viper pins the key beneath his collar, smooths the blood off his shirt with her thumb, and says, “High-limit floor. Try to arrive with the same clothes you’re wearing now.”'}
     ]
   },
   {
@@ -64,10 +64,10 @@ export const CUTSCENES:readonly Cutscene[]=[
     accent:'#ffd229',
     debauchery:88,
     beats:[
-      {speaker:'BIANCA BLACKOUT',shot:'lead',jackPose:1,leadPose:2,stamp:'HOUSE EDGE: BIANCA',line:'That key gets you into my lounge. The stare costs extra.'},
-      {speaker:'JACK',shot:'jack',jackPose:2,leadPose:2,stamp:'CREDIT SCORE: DECEASED',line:'Put it on my tab. Apparently financial ruin is my love language.'},
-      {speaker:'BIANCA BLACKOUT',shot:'intimate',jackPose:3,leadPose:3,stamp:'SECOND TAB: PENDING',line:'Beat Damo and your tab vanishes. Keep looking at me like that and I may open a second one.'},
-      {speaker:'HOUSE SECURITY',shot:'wide',jackPose:4,leadPose:4,stamp:'DUE DILIGENCE: FAILED',line:'The doors lock. Bianca leans closer. Jack decides this counts as due diligence. Security strongly disagrees.'}
+      {speaker:'BIANCA BLACKOUT',shot:'lead',jackPose:1,leadPose:2,stamp:'HOUSE EDGE: BIANCA',line:'That key gets you into my high-limit room. The blood on your shirt violates the dress code. The staring violates my patience.'},
+      {speaker:'JACK',shot:'jack',jackPose:2,leadPose:2,stamp:'CREDIT SCORE: DECEASED',line:'You can send me the cleaning bill. Add it to whatever you already think I owe you.'},
+      {speaker:'BIANCA BLACKOUT',shot:'intimate',jackPose:3,leadPose:3,stamp:'SECOND TAB: PENDING',line:'Beat Damo and the tab disappears. Lose, and security removes you. Keep looking at me like that and I may make them remove the shirt first.'},
+      {speaker:'HOUSE SECURITY',shot:'wide',jackPose:4,leadPose:4,stamp:'DUE DILIGENCE: FAILED',line:'Bianca closes the distance until the casino noise disappears behind her perfume. The doors lock. Somewhere outside, security receives instructions they are definitely not sharing with Jack.'}
     ]
   },
   {
@@ -82,10 +82,10 @@ export const CUTSCENES:readonly Cutscene[]=[
     accent:'#ff7849',
     debauchery:99,
     beats:[
-      {speaker:'ROXI REDLINE',shot:'lead',jackPose:1,leadPose:2,stamp:'WALK OF SHAME: ELITE',line:'Four venues, three catastrophically bad decisions, two women who could ruin you, one kebab. You are consistent.'},
-      {speaker:'JACK',shot:'jack',jackPose:2,leadPose:2,stamp:'SELF-AWARENESS: LOW',line:'I prefer committed.'},
-      {speaker:'ROXI REDLINE',shot:'intimate',jackPose:3,leadPose:3,stamp:'SUNRISE CAN WAIT',line:'Come here, menace. If sunrise wants to judge us, it can buy a ticket.'},
-      {speaker:'DAWN',shot:'wide',jackPose:4,leadPose:4,stamp:'CASE CLOSED • DIGNITY OPEN',line:'She hooks two fingers in his collar and drags him into the last patch of neon. The pigeon respectfully turns around.'}
+      {speaker:'ROXI REDLINE',shot:'lead',jackPose:1,leadPose:2,stamp:'WALK OF SHAME: ELITE',line:'You smell like casino carpet, cheap smoke, expensive perfume and garlic sauce. Somehow the lipstick survived better than you did.'},
+      {speaker:'JACK',shot:'jack',jackPose:2,leadPose:2,stamp:'SELF-AWARENESS: LOW',line:'I prefer consistent.'},
+      {speaker:'ROXI REDLINE',shot:'intimate',jackPose:3,leadPose:3,stamp:'SUNRISE CAN WAIT',line:'Come here before you say something sober. Sunrise has seen worse and charged less.'},
+      {speaker:'DAWN',shot:'wide',jackPose:4,leadPose:4,stamp:'CASE CLOSED • DIGNITY OPEN',line:'Roxi hooks two fingers through his collar, pulls him into the last strip of neon and kisses the corner of his mouth just enough to make the next conversation inconvenient. Dawn can file a complaint.'}
     ]
   }
 ] as const;
