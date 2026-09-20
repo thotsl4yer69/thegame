@@ -464,22 +464,185 @@ export class GameScene extends Phaser.Scene{
   updatePresentation(time:number){
     this.playerShadow.setPosition(this.player.x,this.player.y+62).setDepth(Math.max(1,Math.round(this.player.y)-2));
     this.highAura.setPosition(this.player.x,this.player.y).setDepth(Math.max(2,Math.round(this.player.y)-1)).setAlpha(this.state.high>=60?.05+this.state.high/600:0).setScale(.92+Math.sin(time/150)*.035);
+    const zoneIndex=ZONES.findIndex(zone=>this.player.x>=zone.start&&this.player.x<zone.end);
+    if(zoneIndex!==this.currentZone&&zoneIndex>=0){
+      this.currentZone=zoneIndex;
+      const zone=ZONES[zoneIndex];
+      this.background.setTint(zone.tint);
+      this.midground.setTint(zone.tint);
+      this.floorGlow.setFillStyle(zone.floor,.78);
+      this.zoneBanner(zone.name,zone.subtitle);
+    }
   }
 
   buildLevelArt(){
-    const signs=['NO PHOTOS','VIP','TIPS FIRST','BAD IDEAS','PRIVATE','BOTTLE SERVICE','STAFF ONLY'];
-    for(let x=360,i=0;x<WORLD_W;x+=500,i++){
-      const sign=this.add.text(x,Phaser.Math.Between(120,250),signs[i%signs.length],{fontFamily:'Black Ops One',fontSize:i%2?'22px':'30px',color:i%3?'#ff70bd':'#ffd229',stroke:'#090509',strokeThickness:7}).setDepth(-10).setAlpha(.78);
-      this.levelObjects.push(sign);
-      if(i%2===0){
-        const prop=this.add.image(x+180,590,`prop${i%4}-${(i%4)+1}`).setScale(.18).setAlpha(.7).setDepth(0);
-        this.levelObjects.push(prop);
+    const zoneColors=[0xff4aa8,0xb64aff,0xffc247,0xff315e];
+    ZONES.forEach((zone,index)=>{
+      const width=zone.end-zone.start,mid=(zone.start+zone.end)/2;
+      const wash=this.add.rectangle(mid,170,width,340,zoneColors[index],.055).setDepth(-18);
+      this.levelObjects.push(wash);
+
+      const title=this.add.text(zone.start+68,104,zone.name,{
+        fontFamily:'Black Ops One',fontSize:'34px',color:'#ffffff',stroke:'#090509',strokeThickness:8
+      }).setDepth(-9).setAlpha(.42);
+      const sub=this.add.text(zone.start+72,148,zone.subtitle,{
+        fontFamily:'Oswald',fontSize:'14px',color:index===2?'#ffd229':'#ff8bc8'
+      }).setDepth(-9).setAlpha(.6);
+      this.levelObjects.push(title,sub);
+
+      for(let x=zone.start+280;x<zone.end-100;x+=520){
+        const column=this.add.rectangle(x,280,18,300,0x090509,.82).setStrokeStyle(3,zoneColors[index],.34).setDepth(-5);
+        const lamp=this.add.circle(x,122,13,zoneColors[index],.62).setDepth(-4);
+        const glow=this.add.circle(x,122,58,zoneColors[index],.08).setBlendMode(Phaser.BlendModes.ADD).setDepth(-6);
+        this.levelObjects.push(column,lamp,glow);
       }
-    }
+
+      if(index===0){
+        this.decorSign(zone.start+460,238,'NO PHOTOS',0xff4aa8);
+        this.decorSign(zone.start+1030,210,'TIPS FIRST',0xffd229);
+        this.velvetRope(zone.start+620,545,260);
+        this.addBreakable(zone.start+820,570,'prop2-2','BOTTLE TOWER',2,18);
+        this.addBreakable(zone.start+1210,585,'prop1-4','TIP JAR',1,28);
+      }else if(index===1){
+        this.decorSign(zone.start+440,192,'MAIN STAGE',0xb64aff);
+        this.decorSign(zone.start+1050,245,'CASH • GLITTER • REGRET',0xff4aa8);
+        this.stagePole(zone.start+720);
+        this.stagePole(zone.start+1110);
+        this.dancerSilhouette(zone.start+720,390,0xff7bc7);
+        this.dancerSilhouette(zone.start+1110,390,0xb98cff);
+        this.addBreakable(zone.start+560,585,'prop2-2','CHAMPAGNE BUCKET',2,22);
+        this.addBreakable(zone.start+1270,575,'prop3-4','LIGHT RIG',3,34);
+      }else if(index===2){
+        this.decorSign(zone.start+400,190,'VIP ONLY',0xffd229);
+        this.decorSign(zone.start+1100,240,'PRIVATE BOOTHS',0xff8bc8);
+        this.vipBooth(zone.start+620,575,0x7a173f);
+        this.vipBooth(zone.start+1110,575,0x7b5b16);
+        this.mirrorPanel(zone.start+1420,300);
+        this.addBreakable(zone.start+840,585,'prop1-4','TABLE CASH',1,42);
+        this.addBreakable(zone.start+1320,585,'prop2-2','BOTTLE SERVICE',2,30);
+      }else{
+        this.decorSign(zone.start+390,188,"OWNER'S BOOTH",0xff315e);
+        this.decorSign(zone.start+1040,235,'STAFF • DRESSING ROOMS',0xff8bc8);
+        this.vipBooth(zone.start+690,575,0x5d1026);
+        this.mirrorPanel(zone.start+1160,290);
+        this.dressingDoor(zone.start+1450,300,'DRESSING ROOM');
+        this.addBreakable(zone.start+820,580,'prop2-2','TOP-SHELF BOTTLES',3,45);
+        this.addBreakable(zone.start+1360,585,'prop1-4','CHAD\'S CASH',2,69);
+      }
+    });
+
     for(const enc of ENCOUNTERS){
-      const title=this.add.text(enc.x,340,enc.title,{fontFamily:'Black Ops One',fontSize:'15px',color:'#ffd229',stroke:'#000',strokeThickness:6}).setOrigin(.5).setAlpha(.28).setDepth(-3);
-      this.levelObjects.push(title);
+      const mark=this.add.text(enc.x,342,enc.title,{
+        fontFamily:'Black Ops One',fontSize:'15px',color:'#ffd229',stroke:'#000',strokeThickness:6
+      }).setOrigin(.5).setAlpha(.28).setDepth(-3);
+      this.levelObjects.push(mark);
     }
+
+    const foregroundXs=[1450,2980,4530,5980];
+    foregroundXs.forEach((x,i)=>{
+      const curtain=this.add.rectangle(x,510,110,430,i%2?0x23092b:0x290812,.78).setDepth(760);
+      const trim=this.add.rectangle(x,510,8,430,i%2?0xb64aff:0xff315e,.62).setDepth(761);
+      this.levelObjects.push(curtain,trim);
+    });
+  }
+
+  decorSign(x:number,y:number,label:string,color:number){
+    const panel=this.add.rectangle(x,y,label.length*13+36,46,0x050206,.82).setStrokeStyle(3,color,.75).setDepth(-4);
+    const text=this.add.text(x,y,label,{fontFamily:'Black Ops One',fontSize:'18px',color:'#ffffff'}).setOrigin(.5).setDepth(-3);
+    const glow=this.add.rectangle(x,y,label.length*13+52,60,color,.055).setBlendMode(Phaser.BlendModes.ADD).setDepth(-5);
+    this.levelObjects.push(panel,text,glow);
+  }
+
+  velvetRope(x:number,y:number,width:number){
+    const left=this.add.rectangle(x-width/2,y-45,10,94,0xd7b04b,.9).setDepth(2);
+    const right=this.add.rectangle(x+width/2,y-45,10,94,0xd7b04b,.9).setDepth(2);
+    const rope=this.add.rectangle(x,y-78,width,8,0xb81449,.88).setDepth(3);
+    this.levelObjects.push(left,right,rope);
+  }
+
+  stagePole(x:number){
+    const base=this.add.ellipse(x,603,92,20,0xffd229,.14).setStrokeStyle(2,0xffd229,.4).setDepth(0);
+    const pole=this.add.rectangle(x,385,5,438,0xe9d8e2,.72).setDepth(1);
+    const top=this.add.circle(x,164,8,0xffd229,.72).setDepth(1);
+    this.levelObjects.push(base,pole,top);
+  }
+
+  dancerSilhouette(x:number,y:number,color:number){
+    const head=this.add.circle(x,y-78,16,color,.55).setDepth(-2);
+    const body=this.add.ellipse(x,y-26,42,104,color,.45).setDepth(-2);
+    const legA=this.add.rectangle(x-10,y+46,13,92,color,.36).setAngle(6).setDepth(-2);
+    const legB=this.add.rectangle(x+10,y+46,13,92,color,.36).setAngle(-6).setDepth(-2);
+    const glow=this.add.circle(x,y-12,96,color,.045).setBlendMode(Phaser.BlendModes.ADD).setDepth(-4);
+    this.levelObjects.push(head,body,legA,legB,glow);
+  }
+
+  vipBooth(x:number,y:number,color:number){
+    const back=this.add.rectangle(x,y-60,260,122,color,.6).setStrokeStyle(3,0xffd8eb,.22).setDepth(0);
+    const seat=this.add.rectangle(x,y,282,48,0x120611,.95).setStrokeStyle(3,color,.7).setDepth(2);
+    const table=this.add.ellipse(x,y-6,88,34,0x090509,.94).setStrokeStyle(2,0xffd229,.46).setDepth(3);
+    this.levelObjects.push(back,seat,table);
+  }
+
+  mirrorPanel(x:number,y:number){
+    const panel=this.add.rectangle(x,y,150,268,0x182031,.72).setStrokeStyle(5,0xffd229,.42).setDepth(-2);
+    const shine=this.add.rectangle(x-30,y,12,246,0xcff7ff,.16).setAngle(8).setDepth(-1);
+    this.levelObjects.push(panel,shine);
+  }
+
+  dressingDoor(x:number,y:number,label:string){
+    const door=this.add.rectangle(x,y,180,292,0x160812,.92).setStrokeStyle(4,0xff315e,.7).setDepth(-2);
+    const text=this.add.text(x,y-14,label,{fontFamily:'Black Ops One',fontSize:'13px',color:'#ff8bc8'}).setOrigin(.5).setDepth(-1);
+    const bulbY=[y-116,y-70,y-24,y+22,y+68,y+114];
+    bulbY.forEach(by=>{const a=this.add.circle(x-76,by,5,0xffd229,.65).setDepth(-1);const b=this.add.circle(x+76,by,5,0xffd229,.65).setDepth(-1);this.levelObjects.push(a,b)});
+    this.levelObjects.push(door,text);
+  }
+
+  addBreakable(x:number,y:number,key:string,label:string,hp:number,cash:number){
+    const prop=this.add.image(x,y,key).setScale(.25).setDepth(Math.round(y)) as Breakable;
+    Object.assign(prop,{hp,cash,label,broken:false});
+    this.breakables.push(prop);this.levelObjects.push(prop);
+    const tag=this.add.text(x,y-72,label,{fontFamily:'Black Ops One',fontSize:'8px',color:'#ffd229',stroke:'#000',strokeThickness:4}).setOrigin(.5).setAlpha(.55).setDepth(Math.round(y)+1);
+    this.levelObjects.push(tag);
+  }
+
+  hitBreakable(prop:Breakable,damage:number){
+    if(prop.broken)return;
+    prop.hp-=damage;prop.setTintFill(0xffffff);
+    this.time.delayedCall(55,()=>prop.active&&!prop.broken&&prop.clearTint());
+    this.sparkBurst(prop.x,prop.y,0xffd229);
+    if(prop.hp>0)return;
+    prop.broken=true;this.state.cash+=prop.cash;this.state.score+=prop.cash*8;
+    this.floatLabel(prop.x,prop.y-40,`+${prop.cash} CASH`,'#ffd229');
+    this.game.events.emit('debauchery',{name:`${prop.label} DESTROYED`});
+    this.cameras.main.shake(70,.004);
+    this.tweens.add({targets:prop,alpha:0,scaleX:.7,scaleY:.35,angle:this.facing*18,duration:180,onComplete:()=>prop.setVisible(false)});
+  }
+
+  attackArc(def:AttackDef){
+    const color=def.damage>=3?0xffd229:0xff5da8;
+    const start=this.facing>0?-58:122,end=this.facing>0?58:238;
+    const arc=this.add.arc(this.player.x+this.facing*70,this.player.y-8,58,start,end,false,color,.04)
+      .setStrokeStyle(def.damage>=3?7:4,color,.72).setDepth(999);
+    this.tweens.add({targets:arc,scaleX:1.45,scaleY:1.18,alpha:0,duration:Math.min(180,def.duration),ease:'Quad.easeOut',onComplete:()=>arc.destroy()});
+  }
+
+  sparkBurst(x:number,y:number,color:number){
+    for(let i=0;i<7;i++){
+      const dot=this.add.circle(x,y-30,Phaser.Math.Between(2,5),color,.85).setDepth(1000);
+      this.tweens.add({targets:dot,x:x+Phaser.Math.Between(-48,48),y:y-30+Phaser.Math.Between(-52,42),alpha:0,duration:Phaser.Math.Between(160,280),onComplete:()=>dot.destroy()});
+    }
+  }
+
+  floatLabel(x:number,y:number,label:string,color:string){
+    const text=this.add.text(x,y,label,{fontFamily:'Black Ops One',fontSize:'16px',color,stroke:'#090509',strokeThickness:5}).setOrigin(.5).setDepth(1200);
+    this.tweens.add({targets:text,y:y-55,alpha:0,duration:650,ease:'Cubic.easeOut',onComplete:()=>text.destroy()});
+  }
+
+  zoneBanner(title:string,subtitle:string){
+    const bg=this.add.rectangle(640,150,560,86,0x050206,.86).setScrollFactor(0).setStrokeStyle(3,0xffd229,.44).setDepth(1800).setAlpha(0);
+    const h=this.add.text(640,135,title,{fontFamily:'Black Ops One',fontSize:'25px',color:'#ffffff',stroke:'#ff269c',strokeThickness:3}).setOrigin(.5).setScrollFactor(0).setDepth(1801).setAlpha(0);
+    const s=this.add.text(640,169,subtitle,{fontFamily:'Oswald',fontSize:'12px',color:'#ffd229'}).setOrigin(.5).setScrollFactor(0).setDepth(1801).setAlpha(0);
+    this.tweens.add({targets:[bg,h,s],alpha:1,duration:130,yoyo:true,hold:720,ease:'Quad.easeOut',onComplete:()=>{bg.destroy();h.destroy();s.destroy()}});
   }
 
   finish(){
