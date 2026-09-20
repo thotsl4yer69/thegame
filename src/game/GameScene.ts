@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import {DIFFICULTIES,ENEMIES,EnemyKey,STAGES} from './data';
+import {DIFFICULTIES,ENEMIES,EnemyKey} from './data';
+import {CHAPTERS,type ChapterDef,type ChapterEncounter} from './chapters';
 import type {FilthyAudio} from './audio';
 import {recordClear,unlockAchievement,unlockGalleryEntry} from './progression';
 import type {CampaignReward} from './campaign';
@@ -13,26 +14,12 @@ type Foe=Phaser.Physics.Arcade.Sprite&{
 };
 type Breakable=Phaser.GameObjects.Image&{hp:number;cash:number;label:string;broken:boolean};
 type RunState={stage:number;wave:number;hp:number;maxHp:number;high:number;packets:number;cash:number;score:number;combo:number;kills:number;damageTaken:number;startedAt:number;upgrades:Set<string>;weapon:string;weaponHits:number};
-type Encounter={x:number;title:string;enemies:EnemyKey[];boss?:EnemyKey};
 type AttackDef={duration:number;hitAt:number;rangeX:number;rangeY:number;damage:number;knock:number;lunge:number;frame:number};
 
 const WORLD_W=6200;
 const FLOOR_TOP=405;
 const FLOOR_BOTTOM=625;
 const PLAYER_SPEED=285;
-const ZONES=[
-  {start:0,end:1500,name:'QUEUE & ENTRY',subtitle:'VELVET ROPE • FLASH PHOTOGRAPHY',tint:0xff4aa8,floor:0x25091f},
-  {start:1500,end:3000,name:'MAIN FLOOR',subtitle:'BASS • GLITTER • BAD SPACING',tint:0xb64aff,floor:0x170b2a},
-  {start:3000,end:4550,name:'VIP CORRIDOR',subtitle:'MIRRORS • GOLD • NO REFUNDS',tint:0xffc247,floor:0x24150a},
-  {start:4550,end:WORLD_W,name:"OWNER'S BOOTH",subtitle:'PRIVATE • EXPENSIVE • HOSTILE',tint:0xff315e,floor:0x26080e}
-] as const;
-const ENCOUNTERS:Encounter[]=[
-  {x:980,title:'FRONT DOOR SHAKEDOWN',enemies:['lexi','roxi']},
-  {x:2280,title:'MAIN FLOOR',enemies:['lexi','lola','roxi']},
-  {x:3680,title:'VIP CORRIDOR',enemies:['lola','lexi','roxi']},
-  {x:5060,title:"OWNER'S BOOTH",enemies:['lexi'],boss:'chad'}
-];
-
 export class GameScene extends Phaser.Scene{
   audio:FilthyAudio;
   auto=false;
@@ -46,6 +33,10 @@ export class GameScene extends Phaser.Scene{
   floorGlow!:Phaser.GameObjects.Rectangle;
   breakables:Breakable[]=[];
   currentZone=-1;
+  chapterIndex=0;
+  chapter:ChapterDef=CHAPTERS[0];
+  powerMult=1;
+  speedMult=1;
 
   cursors!:Phaser.Types.Input.Keyboard.CursorKeys;
   keys!:Record<string,Phaser.Input.Keyboard.Key>;
@@ -94,7 +85,7 @@ export class GameScene extends Phaser.Scene{
     for(let r=0;r<8;r++)for(let i=1;i<=4;i++)this.load.image(`woman${r}-${i}`,`assets/characters/woman-row${r}/0${i}.png`);
     for(let r=0;r<4;r++)for(let i=1;i<=4;i++)this.load.image(`man${r}-${i}`,`assets/enemies/man-row${r}/0${i}.png`);
     for(let r=0;r<4;r++)for(let i=1;i<=4;i++)this.load.image(`prop${r}-${i}`,`assets/props/row${r}/0${i}.png`);
-    this.load.image('bg-club','assets/backgrounds/pink-pigeon.webp');
+    for(const chapter of CHAPTERS)if(!this.textures.exists(chapter.backgroundKey))this.load.image(chapter.backgroundKey,chapter.backgroundAsset);
   }
 
   create(){
@@ -103,7 +94,7 @@ export class GameScene extends Phaser.Scene{
     this.physics.world.setBounds(0,FLOOR_TOP,WORLD_W,FLOOR_BOTTOM-FLOOR_TOP);
     this.cameras.main.setBounds(0,0,WORLD_W,720).setBackgroundColor('#090509');
 
-    this.background=this.add.tileSprite(0,0,WORLD_W,720,'bg-club').setOrigin(0).setScrollFactor(.08,1).setDepth(-30).setAlpha(.78);
+    this.background=this.add.tileSprite(0,0,WORLD_W,720,this.chapter.backgroundKey).setOrigin(0).setScrollFactor(.08,1).setDepth(-30).setAlpha(.78);
     this.midground=this.add.tileSprite(0,0,WORLD_W,720,'bg-club').setOrigin(0).setScrollFactor(.36,1).setDepth(-24).setAlpha(.2).setTint(0xff44aa);
     this.floorGlow=this.add.rectangle(WORLD_W/2,615,WORLD_W,220,0x120713,.72).setDepth(-8);
     this.add.rectangle(WORLD_W/2,FLOOR_TOP-4,WORLD_W,3,0xff269c,.35).setDepth(-7);
@@ -129,13 +120,14 @@ export class GameScene extends Phaser.Scene{
     this.game.events.on('touch',touch);this.game.events.on('autopause',autopause);
     this.events.once('shutdown',()=>{this.game.events.off('touch',touch);this.game.events.off('autopause',autopause)});
 
-    this.buildLevelArt();
     this.resetState();
     this.ready=true;
     if(this.auto)this.time.delayedCall(100,()=>this.startRun());
   }
 
   setDifficulty(key:string){if(key in DIFFICULTIES)this.difficultyKey=key as DifficultyKey}
+  setChapter(index:number){this.chapterIndex=Phaser.Math.Clamp(index,0,CHAPTERS.length-1);this.chapter=CHAPTERS[this.chapterIndex];this.state.stage=this.chapterIndex}
+  applyUpgrade(id:string){if(id==='power')this.powerMult*=1.16;else if(id==='speed')this.speedMult*=1.08;else if(id==='meat'){this.state.maxHp+=18;this.state.hp=Math.min(this.state.maxHp,this.state.hp+28)}else if(id==='high')this.state.high=Math.min(100,this.state.high+35)}
   setCampaignRoute(label:string,threat:number,reward:CampaignReward={}){this.campaignRouteLabel=label;this.campaignThreat=Math.max(0,Math.min(2,Math.round(threat)));this.pendingCampaignReward={...reward}}
 
   resetState(){
@@ -145,15 +137,31 @@ export class GameScene extends Phaser.Scene{
   startRun(){
     if(!this.ready){this.auto=true;return}
     if(this.running)return;
+    this.startChapter(this.chapterIndex);
+  }
+
+  startChapter(index:number,reward:CampaignReward=this.pendingCampaignReward){
+    this.clearChapter();
+    this.setChapter(index);
+    this.pendingCampaignReward={...reward};
     this.running=true;this.paused=false;this.transition=false;
-    this.encounterIndex=0;this.encounterActive=false;this.encounterSpawning=false;
+    this.encounterIndex=0;this.encounterActive=false;this.encounterSpawning=false;this.currentZone=-1;this.activeBoss=undefined;
+    this.background.setTexture(this.chapter.backgroundKey).clearTint();
+    this.midground.setTexture(this.chapter.backgroundKey).clearTint();
     this.player.setActive(true).setVisible(true).setPosition(220,535).setVelocity(0).setAlpha(1).clearTint();
     this.playerShadow.setVisible(true);this.highAura.setVisible(true);
     this.applyCampaignReward();
     this.stageStartKills=this.state.kills;this.stageStartDamage=this.state.damageTaken;this.stageStartScore=this.state.score;
     this.physics.resume();this.cameras.main.setScroll(0,0);
-    this.game.events.emit('venueIntro',{act:'QUALITY SLICE',name:'THE PINK PIGEON',line:'BELT-SCROLL COMBAT REBUILD • READABLE, FAIR, RESPONSIVE'});
-    this.audio.stage(0);this.emitHud();
+    this.buildLevelArt();
+    this.game.events.emit('venueIntro',{act:this.chapter.act,name:this.chapter.name,line:`${this.chapter.district} • ${this.chapter.intro}`});
+    this.audio.stage(this.chapterIndex%4);this.emitHud();
+  }
+
+  clearChapter(){
+    this.leftGate?.destroy();this.rightGate?.destroy();this.leftGate=this.rightGate=undefined;
+    this.foes?.children.each(obj=>{const foe=obj as Foe;foe.shadow?.destroy();foe.telegraph?.destroy();foe.bar?.destroy();foe.barBg?.destroy();obj.destroy();return true});
+    this.levelObjects.forEach(obj=>obj.destroy());this.levelObjects=[];this.breakables=[];this.encounterActive=false;this.encounterSpawning=false;
   }
 
   applyCampaignReward(){
@@ -189,7 +197,7 @@ export class GameScene extends Phaser.Scene{
     if(x||y){const len=Math.hypot(x,y)||1;x/=len;y/=len}
     const dt=Math.min(.05,delta/1000),body=this.player.body as Phaser.Physics.Arcade.Body;
     const attacking=!!this.attack;
-    const speed=PLAYER_SPEED*(attacking?.38:1);
+    const speed=PLAYER_SPEED*this.speedMult*(attacking?.38:1);
     const approach=(value:number,target:number,step:number)=>value<target?Math.min(value+step,target):Math.max(value-step,target);
     if(time>=this.invulnerableUntil){
       body.setVelocityX(approach(body.velocity.x,x*speed,(x?2200:3000)*dt));
@@ -268,7 +276,7 @@ export class GameScene extends Phaser.Scene{
       if(!foe.active||foe.dead)return true;
       const dx=foe.x-this.player.x,dy=Math.abs(foe.y-this.player.y);
       if(Math.sign(dx||this.facing)===this.facing&&Math.abs(dx)<=def.rangeX&&dy<=def.rangeY){
-        this.hitFoe(foe,def.damage,this.facing*def.knock);hits++;
+        this.hitFoe(foe,def.damage*this.powerMult,this.facing*def.knock);hits++;
       }
       return true;
     });
