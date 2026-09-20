@@ -190,7 +190,7 @@ game.events.on('hud',(s:any)=>{
   q('#score').textContent=s.score.toLocaleString();
   q('#act').textContent=s.stageData.act;
   q('#venue').textContent=s.stageData.name;
-  q('#wave').textContent=`WAVE ${s.wave+1}/${s.stageData.waves.length}`;
+  q('#wave').textContent=s.progress?`${s.progress.label} • ${s.progress.current}/${s.progress.total}`:`ROUTE ${s.wave+1}`;
   const combo=q('#combo');
   combo.innerHTML=`${s.combo}× <small>${s.combo>8?'ABSOLUTE FILTH':s.combo>4?'DISGUSTING':'FILTHY'}</small>`;
   combo.classList.toggle('gone',s.combo<2);
