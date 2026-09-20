@@ -48,7 +48,7 @@ export const CHAPTERS:ChapterDef[]=[
  },
  {
   id:'glasshouse',act:'CHAPTER 03',name:'GLASSHOUSE',district:'CHAPEL STREET',subtitle:'FASHION • EGO • FLASH',
-  backgroundKey:'bg-club',backgroundAsset:'assets/backgrounds/pink-pigeon.webp',theme:'chapel',cutsceneId:1,
+  backgroundKey:'bg-club',backgroundAsset:'assets/backgrounds/pink-pigeon.webp',theme:'chapel',cutsceneId:2,
   intro:'CHAPEL STREET • EVERYBODY LOOKS EXPENSIVE UNTIL THE FIRST PUNCH.',
   clear:'THE ROOFTOP PARTY HAS BECOME A LIABILITY WAIVER.',
   bossLine:'LOLA OWNS THE FLOOR. SHE HAS DECIDED YOU ARE DECOR.',
@@ -62,7 +62,7 @@ export const CHAPTERS:ChapterDef[]=[
  },
  {
   id:'casino-purgatory',act:'CHAPTER 04',name:'CASINO PURGATORY',district:'SOUTHBANK',subtitle:'GOLD • DEBT • SURVEILLANCE',
-  backgroundKey:'bg-casino',backgroundAsset:'assets/backgrounds/casino.webp',theme:'casino',cutsceneId:2,
+  backgroundKey:'bg-casino',backgroundAsset:'assets/backgrounds/casino.webp',theme:'casino',cutsceneId:3,
   intro:'SOUTHBANK • THE CARPET COSTS MORE THAN YOUR CAR. DO NOT BLEED ON IT.',
   clear:'THE HOUSE STILL WINS. IT JUST HAS A MEDICAL BILL NOW.',
   bossLine:'HIGH-LIMIT LOUNGE. CANDY THINKS YOU ARE UNDERDRESSED.',
@@ -76,7 +76,7 @@ export const CHAPTERS:ChapterDef[]=[
  },
  {
   id:'warehouse-44',act:'CHAPTER 05',name:'WAREHOUSE 44',district:'FOOTSCRAY',subtitle:'BASS • CONCRETE • CONSEQUENCES',
-  backgroundKey:'bg-alley',backgroundAsset:'assets/backgrounds/alley.webp',theme:'warehouse',cutsceneId:1,
+  backgroundKey:'bg-alley',backgroundAsset:'assets/backgrounds/alley.webp',theme:'warehouse',cutsceneId:4,
   intro:'FOOTSCRAY • INDUSTRIAL BASS, BAD POWDER AND A DOOR WITH NO SIGN.',
   clear:'WAREHOUSE 44 IS NOW MOSTLY A FIRE CODE VIOLATION.',
   bossLine:'DAMO THE DOOR HAS BEEN WAITING ALL NIGHT TO SAY NO.',
@@ -90,7 +90,7 @@ export const CHAPTERS:ChapterDef[]=[
  },
  {
   id:'kebab-judgment',act:'FINAL CHAPTER',name:'KEBAB JUDGMENT',district:'ST KILDA / DAWN',subtitle:'GARLIC • REGRET • SUNRISE',
-  backgroundKey:'bg-kebab',backgroundAsset:'assets/backgrounds/kebab.webp',theme:'dawn',cutsceneId:3,
+  backgroundKey:'bg-kebab',backgroundAsset:'assets/backgrounds/kebab.webp',theme:'dawn',cutsceneId:5,
   intro:'ST KILDA • SUNRISE HAS ARRIVED TO COLLECT STATEMENTS.',
   clear:'DAWN. AGAINST ALL MEDICAL ADVICE, YOU SURVIVED MELBOURNE.',
   bossLine:'LAST ROUND. EVERY BAD DECISION FROM TONIGHT HAS FOUND THE SAME FOOTPATH.',
