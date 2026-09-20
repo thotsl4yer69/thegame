@@ -241,6 +241,7 @@ export class GameScene extends Phaser.Scene{
     this.player.setTexture(`jack2-${def.frame}`);
     this.player.setVelocityX(this.facing*def.lunge);
     this.player.setVelocityY(0);
+    this.attackArc(def);
   }
 
   updateAttack(time:number){
@@ -270,6 +271,13 @@ export class GameScene extends Phaser.Scene{
       }
       return true;
     });
+    for(const prop of this.breakables){
+      if(prop.broken||!prop.active)continue;
+      const dx=prop.x-this.player.x,dy=Math.abs(prop.y-this.player.y);
+      if(Math.sign(dx||this.facing)===this.facing&&Math.abs(dx)<=def.rangeX+38&&dy<=def.rangeY+30){
+        this.hitBreakable(prop,def.damage);hits++;
+      }
+    }
     if(hits){
       this.state.combo=Math.min(99,this.state.combo+hits);
       this.state.high=Math.min(100,this.state.high+5*hits);
@@ -310,8 +318,12 @@ export class GameScene extends Phaser.Scene{
 
       if(foe.ai==='telegraph'){
         foe.setVelocity(0);
+        if(foe.telegraph){
+          const remain=Math.max(0,foe.attackAt-time),p=1-remain/(foe.boss?300:390);
+          foe.telegraph.setPosition(foe.x,foe.y+56).setScale(.9+p*.45).setAlpha(.2+p*.62);
+        }
         if(time>=foe.attackAt){
-          foe.clearTint();
+          foe.clearTint();foe.telegraph?.setVisible(false);
           if(adX<112&&adY<70)this.hurt(foe.damage,foe.x);
           foe.setVelocityX(Math.sign(dx||1)*140);
           foe.ai='recover';foe.recoverUntil=time+(foe.boss?480:620);
@@ -329,6 +341,7 @@ export class GameScene extends Phaser.Scene{
       const close=adX<105&&adY<62;
       if(close&&time>=foe.nextAttack){
         foe.ai='telegraph';foe.attackAt=time+(foe.boss?300:390);
+        foe.telegraph?.setVisible(true).setPosition(foe.x,foe.y+56).setScale(.9).setAlpha(.2);
         foe.setTint(foe.boss?0xff4d87:0xffcf4d);
         foe.setTexture(`${ENEMIES[foe.kind].sprite}-3`);
         return true;
@@ -378,6 +391,7 @@ export class GameScene extends Phaser.Scene{
     foe.setScale(scale).setCollideWorldBounds(true).setDepth(Math.round(foe.y));
     this.configureBody(foe,58,88);
     foe.shadow=this.add.ellipse(foe.x,foe.y+62,82*scale,18,0x000000,.42).setDepth(1);
+    foe.telegraph=this.add.ellipse(foe.x,foe.y+56,112*scale,44,0xffd229,.08).setStrokeStyle(4,boss?0xff315e:0xffd229,.95).setDepth(2).setVisible(false);
     foe.barBg=this.add.rectangle(foe.x,foe.y-94,54,7,0x130914,.92).setStrokeStyle(1,0xffffff,.65).setDepth(900);
     foe.bar=this.add.rectangle(foe.x-25,foe.y-94,50,3,boss?0xffd229:0xff269c).setOrigin(0,.5).setDepth(901);
     foe.play(`${prefix}${row}-walk`);
@@ -442,7 +456,7 @@ export class GameScene extends Phaser.Scene{
     if(foe.dead)return;foe.dead=true;
     const spec=ENEMIES[foe.kind];this.state.kills++;this.state.score+=Math.round(foe.worth*(1+this.state.combo*.05));this.state.cash+=10;this.state.high=Math.min(100,this.state.high+8);
     if(spec.sprite.startsWith('woman')&&unlockGalleryEntry(foe.kind))this.game.events.emit('achievement',{name:`${spec.name} — DOSSIER`});
-    foe.bar?.destroy();foe.barBg?.destroy();foe.shadow?.destroy();
+    foe.bar?.destroy();foe.barBg?.destroy();foe.shadow?.destroy();foe.telegraph?.destroy();
     foe.setVelocity((foe.x<this.player.x?-1:1)*260,Phaser.Math.Between(-80,80)).setAngularVelocity(Phaser.Math.Between(-120,120)).setTexture(`${spec.sprite}-4`);
     this.time.delayedCall(380,()=>foe.destroy());
   }
