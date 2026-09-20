@@ -248,6 +248,7 @@ game.events.on('ending',async({score,cash,best,kills,damage,seconds,difficulty:r
   audio.pause(true);
   hud.classList.add('gone');
   touch.classList.add('gone');
+  await cutscenes.play(0);
   const time=formatTime(seconds);
   const rank=rankRun(score,true);
   recordRun({score,kills,damage,cleared:true,seconds});
