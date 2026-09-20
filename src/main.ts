@@ -27,6 +27,7 @@ const game=new Phaser.Game({
   physics:{default:'arcade',arcade:{gravity:{x:0,y:1050},debug:false}},
   scene:[scene]
 });
+if(location.search.includes('qa'))(window as any).__ts69={game,scene};
 
 const overlay=q('#overlay');
 const modal=q('#modal');
