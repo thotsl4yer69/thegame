@@ -1077,3 +1077,127 @@ body.campaign-active #marquee{opacity:0}
   #touch.quality-touch .touch-primary button{width:54px;height:54px}
   #touch.quality-touch .touch-primary .smack{width:64px;height:64px}
 }
+
+
+/* === R18 BACKSTAGE CINEMA PASS === */
+.cutscene-set{
+  position:absolute;
+  z-index:2;
+  inset:0;
+  pointer-events:none;
+  overflow:hidden;
+}
+.cutscene-neon-sign{
+  position:absolute;
+  top:16%;
+  right:7%;
+  padding:8px 12px;
+  border:2px solid var(--cut-accent,#ff269c);
+  background:#050206b8;
+  color:#fff;
+  font:clamp(12px,2vw,22px) 'Black Ops One',Impact,sans-serif;
+  letter-spacing:2px;
+  box-shadow:0 0 18px color-mix(in srgb,var(--cut-accent,#ff269c) 65%,transparent),5px 5px #0009;
+  transform:rotate(2deg);
+}
+.cutscene-backstage-tag{
+  position:absolute;
+  top:28%;
+  right:7%;
+  color:#ffd229;
+  font:9px 'Black Ops One',Impact,sans-serif;
+  letter-spacing:1.5px;
+  text-shadow:2px 2px #000;
+}
+.cutscene-mirror{
+  position:absolute;
+  top:12%;
+  right:2.5%;
+  width:270px;
+  height:66%;
+  border:8px solid #331329;
+  background:
+    repeating-linear-gradient(90deg,transparent 0 22px,#ffd229 23px 27px,transparent 28px 46px),
+    linear-gradient(130deg,#dffaff18,#ffffff08 44%,#ff269c0d);
+  box-shadow:inset 0 0 40px #000a,0 0 22px #ffb02855;
+  opacity:.52;
+}
+.cutscene-curtain{
+  position:absolute;
+  top:-6%;
+  left:-2%;
+  width:26%;
+  height:112%;
+  background:
+    repeating-linear-gradient(90deg,#2a061f 0 18px,#6f123e 19px 38px,#24051b 39px 57px);
+  box-shadow:18px 0 26px #0008;
+  opacity:.72;
+}
+.cutscene-pole{
+  position:absolute;
+  left:17%;
+  top:5%;
+  width:5px;
+  height:94%;
+  background:linear-gradient(90deg,#a9a9b8,#f4f1ff,#9c9ba8);
+  box-shadow:0 0 10px #ffffff55;
+  opacity:.55;
+}
+.cutscene-smoke{
+  position:absolute;
+  inset:0;
+  background:
+    radial-gradient(circle at 30% 65%,#c5efff12,transparent 30%),
+    radial-gradient(circle at 70% 22%,#ffffff0c,transparent 26%);
+  filter:blur(8px);
+}
+.cutscene-gold-rail{
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:29%;
+  height:8px;
+  background:linear-gradient(90deg,transparent,#ffd229aa 20%,#fff3a4 50%,#ffd229aa 80%,transparent);
+  box-shadow:0 0 18px #ffd22955;
+}
+.cutscene-dawn{
+  position:absolute;
+  inset:0;
+  background:linear-gradient(0deg,#ff9d5c24 0%,transparent 38%),radial-gradient(circle at 80% 20%,#ffd08a22,transparent 35%);
+}
+#cutscene[data-scene="0"] .cutscene-bg{
+  filter:saturate(1.25) contrast(1.1) brightness(.58);
+}
+#cutscene[data-scene="0"] .cutscene-wash{
+  background:
+    linear-gradient(90deg,#050206df 0%,transparent 34%,transparent 64%,#050206a8 100%),
+    linear-gradient(0deg,#050206f3 0%,transparent 36%,transparent 77%,#05020655 100%),
+    radial-gradient(circle at 73% 38%,#ff269c42,transparent 40%);
+}
+#cutscene[data-scene="0"] .cutscene-lead{
+  right:1%;
+  height:min(94vh,940px);
+  filter:drop-shadow(0 20px 24px #000e) drop-shadow(0 0 24px #ff269c77);
+}
+#cutscene[data-scene="0"] .cutscene-jack{
+  left:3%;
+  height:min(84vh,840px);
+  filter:drop-shadow(0 18px 20px #000e);
+}
+#cutscene[data-scene="0"] .cutscene-copy{
+  border-left-color:#ff269c;
+  background:linear-gradient(135deg,#070309f6,#3b0b2eed 58%,#080409f4);
+}
+#cutscene[data-scene="0"] .cutscene-copy::before{
+  content:'PINK PIGEON // BACKSTAGE INCIDENT REPORT // 18+';
+}
+#cutscene[data-scene="0"] .cutscene-stamp{
+  background:#ff269c;
+  color:#11040c;
+}
+@media(max-height:500px){
+  .cutscene-neon-sign{top:10%;font-size:12px}
+  .cutscene-backstage-tag{top:21%;font-size:7px}
+  .cutscene-mirror{height:72%;width:210px;top:8%}
+  .cutscene-curtain{width:20%}
+}
