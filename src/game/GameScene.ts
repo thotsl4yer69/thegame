@@ -406,7 +406,8 @@ export class GameScene extends Phaser.Scene{
     foe.play(`${prefix}${row}-walk`);
     if(boss){
       this.activeBoss=foe;
-      this.game.events.emit('bossIntro',{name:spec.name,line:'YOU MADE IT TO THE BOOTH. BAD NEWS: SO DID I.',image:`assets/enemies/man-row${row}/01.png`});
+      const image=prefix==='woman'?`assets/characters/woman-row${row}/01.png`:`assets/enemies/man-row${row}/01.png`;
+      this.game.events.emit('bossIntro',{name:spec.name,line:this.chapter.bossLine,image});
     }
     return foe;
   }
@@ -416,21 +417,21 @@ export class GameScene extends Phaser.Scene{
       if(!this.encounterSpawning&&this.foes.countActive(true)===0)this.clearEncounter();
       return;
     }
-    if(this.encounterIndex>=ENCOUNTERS.length){
+    if(this.encounterIndex>=this.chapter.encounters.length){
       if(this.player.x>WORLD_W-360)this.finish();
       return;
     }
-    const next=ENCOUNTERS[this.encounterIndex];
+    const next=this.chapter.encounters[this.encounterIndex];
     if(this.player.x>=next.x)this.startEncounter(next);
   }
 
-  startEncounter(enc:Encounter){
+  startEncounter(enc:ChapterEncounter){
     this.encounterActive=true;this.encounterSpawning=true;this.state.wave=this.encounterIndex;
     this.game.events.emit('debauchery',{name:enc.title});this.toast(`${enc.title} • READ THE TELEGRAPHS`,900);
     this.makeGates(Math.max(120,enc.x-300),Math.min(WORLD_W-120,enc.x+720));
     let slot=0;
     const roster=[...enc.enemies];
-    const maxEnemies=this.difficultyKey==='feral'?Math.min(4,roster.length):Math.min(3,roster.length);
+    const baseCap=this.difficultyKey==='feral'?4:3,maxEnemies=Math.min(baseCap+this.campaignThreat,roster.length);
     for(const kind of roster.slice(0,maxEnemies)){
       const s=slot++;this.time.delayedCall(s*220,()=>this.spawnFoe(kind,false,enc.x+260+s*95,495+(s%3)*45,s));
     }
@@ -449,12 +450,12 @@ export class GameScene extends Phaser.Scene{
   }
 
   clearEncounter(){
-    const enc=ENCOUNTERS[this.encounterIndex];
+    const enc=this.chapter.encounters[this.encounterIndex];
     this.encounterActive=false;this.leftGate?.destroy();this.rightGate?.destroy();this.leftGate=this.rightGate=undefined;
     this.encounterIndex++;this.state.wave=this.encounterIndex;this.activeBoss=undefined;
     this.state.hp=Math.min(this.state.maxHp,this.state.hp+6);
     this.toast(`${enc.title} CLEARED • MOVE RIGHT →`,1000);this.cameras.main.flash(100,255,210,40);
-    if(this.encounterIndex>=ENCOUNTERS.length){
+    if(this.encounterIndex>=this.chapter.encounters.length){
       const exit=this.add.text(WORLD_W-440,520,'EXIT →',{fontFamily:'Black Ops One',fontSize:'42px',color:'#ffd229',stroke:'#ff269c',strokeThickness:6}).setDepth(900);
       this.levelObjects.push(exit);this.tweens.add({targets:exit,alpha:{from:.35,to:1},duration:430,yoyo:true,repeat:-1});
     }
@@ -473,10 +474,10 @@ export class GameScene extends Phaser.Scene{
   updatePresentation(time:number){
     this.playerShadow.setPosition(this.player.x,this.player.y+62).setDepth(Math.max(1,Math.round(this.player.y)-2));
     this.highAura.setPosition(this.player.x,this.player.y).setDepth(Math.max(2,Math.round(this.player.y)-1)).setAlpha(this.state.high>=60?.05+this.state.high/600:0).setScale(.92+Math.sin(time/150)*.035);
-    const zoneIndex=ZONES.findIndex(zone=>this.player.x>=zone.start&&this.player.x<zone.end);
+    const zoneIndex=this.chapter.zones.findIndex(zone=>this.player.x>=zone.start&&this.player.x<zone.end);
     if(zoneIndex!==this.currentZone&&zoneIndex>=0){
       this.currentZone=zoneIndex;
-      const zone=ZONES[zoneIndex];
+      const zone=this.chapter.zones[zoneIndex];
       this.background.setTint(zone.tint);
       this.midground.setTint(zone.tint);
       this.floorGlow.setFillStyle(zone.floor,.78);
@@ -485,8 +486,9 @@ export class GameScene extends Phaser.Scene{
   }
 
   buildLevelArt(){
-    const zoneColors=[0xff4aa8,0xb64aff,0xffc247,0xff315e];
-    ZONES.forEach((zone,index)=>{
+    if(this.chapter.theme!=='club'){this.buildDistrictArt();return}
+    const zoneColors=this.chapter.zones.map(zone=>zone.tint);
+    this.chapter.zones.forEach((zone,index)=>{
       const width=zone.end-zone.start,mid=(zone.start+zone.end)/2;
       const wash=this.add.rectangle(mid,170,width,340,zoneColors[index],.055).setDepth(-18);
       this.levelObjects.push(wash);
@@ -546,7 +548,7 @@ export class GameScene extends Phaser.Scene{
       }
     });
 
-    for(const enc of ENCOUNTERS){
+    for(const enc of this.chapter.encounters){
       const mark=this.add.text(enc.x,342,enc.title,{
         fontFamily:'Black Ops One',fontSize:'15px',color:'#ffd229',stroke:'#000',strokeThickness:6
       }).setOrigin(.5).setAlpha(.28).setDepth(-3);
@@ -559,6 +561,47 @@ export class GameScene extends Phaser.Scene{
       const trim=this.add.rectangle(x,510,8,430,i%2?0xb64aff:0xff315e,.62).setDepth(761);
       this.levelObjects.push(curtain,trim);
     });
+  }
+
+  buildDistrictArt(){
+    const signsByTheme:Record<string,string[]>={
+      goth:['BLACK LANTERN','NO PHOTOS','BACK ROOM','SMOKING AREA','SALEM KNOWS'],
+      chapel:['GUEST LIST','MIRROR BAR','ROOFTOP','NO STORIES','FLASH ON'],
+      casino:['HIGH LIMIT','HOUSE CREDIT','CAMERAS','PRIVATE','NO REFUNDS'],
+      warehouse:['LOADING BAY','NO SIGNAL','RAVE FLOOR','STAFF ONLY','ROLLER DOOR'],
+      dawn:['LAST TRAM','OPEN LATE','GARLIC SAUCE','MOTEL','SUNRISE']
+    };
+    const signs=signsByTheme[this.chapter.theme]??['MELBOURNE','AFTER DARK','KEEP MOVING'];
+    this.chapter.zones.forEach((zone,index)=>{
+      const width=zone.end-zone.start,mid=(zone.start+zone.end)/2,color=zone.tint;
+      this.levelObjects.push(this.add.rectangle(mid,170,width,340,color,.06).setDepth(-18));
+      this.levelObjects.push(this.add.text(zone.start+68,104,zone.name,{fontFamily:'Black Ops One',fontSize:'32px',color:'#fff',stroke:'#090509',strokeThickness:8}).setDepth(-9).setAlpha(.42));
+      this.levelObjects.push(this.add.text(zone.start+72,146,zone.subtitle,{fontFamily:'Oswald',fontSize:'13px',color:'#ffd8ef'}).setDepth(-9).setAlpha(.55));
+      for(let x=zone.start+280;x<zone.end-80;x+=500){
+        this.levelObjects.push(this.add.rectangle(x,292,15,290,0x070307,.72).setStrokeStyle(3,color,.3).setDepth(-5));
+        this.levelObjects.push(this.add.circle(x,138,12,color,.58).setDepth(-4));
+      }
+      this.decorSign(zone.start+420,200,signs[index%signs.length],color);
+      this.decorSign(zone.start+1060,245,signs[(index+1)%signs.length],index===2?0xffd229:color);
+      if(this.chapter.theme==='goth'){
+        this.mirrorPanel(zone.start+620,300);this.dressingDoor(zone.start+1180,300,index===3?'SALEM':'BACK ROOM');
+        this.ambientPerformer(zone.start+820,460,index%2?'woman2-2':'woman4-1',index%2===0);
+      }else if(this.chapter.theme==='chapel'){
+        this.vipBooth(zone.start+660,575,index%2?0xff4aa8:0x1b6a86);this.mirrorPanel(zone.start+1180,300);
+        this.ambientPerformer(zone.start+1000,465,index%2?'woman1-2':'woman6-1',false);
+      }else if(this.chapter.theme==='casino'){
+        this.vipBooth(zone.start+620,575,0x7b5b16);this.vipBooth(zone.start+1110,575,0x2b2010);this.mirrorPanel(zone.start+1400,300);
+        this.addBreakable(zone.start+860,580,'prop1-4','CHIPS & CASH',2,45);
+      }else if(this.chapter.theme==='warehouse'){
+        this.stagePole(zone.start+640);this.stagePole(zone.start+1100);this.dancerSilhouette(zone.start+850,400,color);
+        this.addBreakable(zone.start+1180,580,'prop3-4','LIGHT RIG',3,38);
+      }else{
+        this.vipBooth(zone.start+680,575,0x542019);this.decorSign(zone.start+1220,190,index===3?'SUNRISE':'OPEN LATE',0xff7849);
+        this.addBreakable(zone.start+980,580,'prop1-3','KEBAB',1,15);
+      }
+    });
+    for(const enc of this.chapter.encounters)this.levelObjects.push(this.add.text(enc.x,342,enc.title,{fontFamily:'Black Ops One',fontSize:'15px',color:'#ffd229',stroke:'#000',strokeThickness:6}).setOrigin(.5).setAlpha(.28).setDepth(-3));
+    [1450,2980,4530,5980].forEach((x,i)=>this.levelObjects.push(this.add.rectangle(x,510,100,430,i%2?0x12051a:0x17050b,.72).setDepth(760)));
   }
 
   decorSign(x:number,y:number,label:string,color:number){
@@ -669,9 +712,14 @@ export class GameScene extends Phaser.Scene{
 
   finish(){
     if(!this.running)return;this.running=false;this.transition=true;this.physics.pause();
-    if(unlockAchievement('pink-slice'))this.game.events.emit('achievement',{name:'PINK PIGEON SURVIVOR'});
-    const best=recordClear(this.state.score),seconds=Math.round((Date.now()-this.state.startedAt)/1000),stageStats={score:this.state.score-this.stageStartScore,kills:this.state.kills-this.stageStartKills,damage:this.state.damageTaken-this.stageStartDamage,cash:this.state.cash};
-    this.game.events.emit('ending',{score:this.state.score,cash:this.state.cash,best,kills:this.state.kills,damage:this.state.damageTaken,seconds,stageStats,difficulty:DIFFICULTIES[this.difficultyKey].name,retry:()=>this.scene.restart({auto:true})});
+    if(unlockAchievement(this.chapter.id))this.game.events.emit('achievement',{name:`${this.chapter.name} — CLEARED`});
+    const seconds=Math.round((Date.now()-this.state.startedAt)/1000),stageStats={score:this.state.score-this.stageStartScore,kills:this.state.kills-this.stageStartKills,damage:this.state.damageTaken-this.stageStartDamage,cash:this.state.cash};
+    if(this.chapterIndex<CHAPTERS.length-1){
+      this.game.events.emit('chapterComplete',{chapter:this.chapterIndex,chapterData:this.chapter,stageStats,score:this.state.score,cash:this.state.cash});
+      return;
+    }
+    const best=recordClear(this.state.score);
+    this.game.events.emit('ending',{score:this.state.score,cash:this.state.cash,best,kills:this.state.kills,damage:this.state.damageTaken,seconds,stageStats,difficulty:DIFFICULTIES[this.difficultyKey].name});
   }
 
   die(){
@@ -692,8 +740,8 @@ export class GameScene extends Phaser.Scene{
   toast(text:string,duration=900){this.game.events.emit('toast',{text,duration})}
 
   emitHud(){
-    const current=Math.min(this.encounterIndex+1,ENCOUNTERS.length),next=ENCOUNTERS[Math.min(this.encounterIndex,ENCOUNTERS.length-1)];
-    this.game.events.emit('hud',{...this.state,stageData:STAGES[0],progress:{current,total:ENCOUNTERS.length,label:this.encounterActive?next?.title:(this.encounterIndex>=ENCOUNTERS.length?'EXIT':'ADVANCE'),distance:Math.max(0,Math.min(1,this.player.x/WORLD_W)),route:'QUALITY SLICE'},boss:this.activeBoss?{name:ENEMIES[this.activeBoss.kind].name,hp:this.activeBoss.hp,max:this.activeBoss.maxHp}:null});
+    const current=Math.min(this.encounterIndex+1,this.chapter.encounters.length),next=this.chapter.encounters[Math.min(this.encounterIndex,this.chapter.encounters.length-1)];
+    this.game.events.emit('hud',{...this.state,stageData:{act:this.chapter.act,name:this.chapter.name},progress:{current,total:this.chapter.encounters.length,label:this.encounterActive?next?.title:(this.encounterIndex>=this.chapter.encounters.length?'EXIT':'ADVANCE'),distance:Math.max(0,Math.min(1,this.player.x/WORLD_W)),route:this.campaignRouteLabel},boss:this.activeBoss?{name:ENEMIES[this.activeBoss.kind].name,hp:this.activeBoss.hp,max:this.activeBoss.maxHp}:null});
   }
 
   createAnimations(){
