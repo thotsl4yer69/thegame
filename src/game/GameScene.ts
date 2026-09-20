@@ -8,7 +8,7 @@ import type {CampaignReward} from './campaign';
 type DifficultyKey=keyof typeof DIFFICULTIES;
 type EnemyState='approach'|'telegraph'|'recover'|'stunned';
 type Foe=Phaser.Physics.Arcade.Sprite&{
-  kind:EnemyKey;hp:number;maxHp:number;damage:number;worth:number;speed:number;boss:boolean;dead:boolean;
+  kind:EnemyKey;hp:number;maxHp:number;damage:number;worth:number;speed:number;style:string;boss:boolean;dead:boolean;phase:number;nextSpecial:number;
   ai:EnemyState;nextAttack:number;attackAt:number;recoverUntil:number;stunnedUntil:number;
   slotX:number;slotY:number;shadow?:Phaser.GameObjects.Ellipse;barBg?:Phaser.GameObjects.Rectangle;bar?:Phaser.GameObjects.Rectangle;telegraph?:Phaser.GameObjects.Ellipse;
 };
@@ -28,6 +28,7 @@ export class GameScene extends Phaser.Scene{
   playerShadow!:Phaser.GameObjects.Ellipse;
   highAura!:Phaser.GameObjects.Ellipse;
   foes!:Phaser.Physics.Arcade.Group;
+  projectiles!:Phaser.Physics.Arcade.Group;
   background!:Phaser.GameObjects.TileSprite;
   midground!:Phaser.GameObjects.TileSprite;
   floorGlow!:Phaser.GameObjects.Rectangle;
@@ -101,6 +102,7 @@ export class GameScene extends Phaser.Scene{
     this.add.rectangle(WORLD_W/2,FLOOR_BOTTOM+8,WORLD_W,5,0x19ead8,.25).setDepth(-7);
 
     this.foes=this.physics.add.group({allowGravity:false});
+    this.projectiles=this.physics.add.group({allowGravity:false});
     this.player=this.physics.add.sprite(220,540,'jack0-1').setScale(.78).setDepth(540).setCollideWorldBounds(true).setActive(false).setVisible(false);
     this.configureBody(this.player,62,92);
     this.playerShadow=this.add.ellipse(220,600,92,22,0x000000,.46).setDepth(1).setVisible(false);
@@ -108,6 +110,7 @@ export class GameScene extends Phaser.Scene{
 
     this.physics.add.collider(this.foes,this.foes);
     this.physics.add.overlap(this.player,this.foes,(_,foe)=>this.contact(foe as Foe));
+    this.physics.add.overlap(this.player,this.projectiles,(_,shot)=>this.projectileHit(shot as Phaser.Physics.Arcade.Image));
 
     this.cameras.main.startFollow(this.player,true,.12,.18);
     this.cameras.main.setDeadzone(170,90);
@@ -161,6 +164,7 @@ export class GameScene extends Phaser.Scene{
   clearChapter(){
     this.leftGate?.destroy();this.rightGate?.destroy();this.leftGate=this.rightGate=undefined;
     this.foes?.children.each(obj=>{const foe=obj as Foe;foe.shadow?.destroy();foe.telegraph?.destroy();foe.bar?.destroy();foe.barBg?.destroy();obj.destroy();return true});
+    this.projectiles?.clear(true,true);
     this.levelObjects.forEach(obj=>obj.destroy());this.levelObjects=[];this.breakables=[];this.encounterActive=false;this.encounterSpawning=false;
   }
 
@@ -334,9 +338,13 @@ export class GameScene extends Phaser.Scene{
         }
         if(time>=foe.attackAt){
           foe.clearTint();foe.telegraph?.setVisible(false);
-          if(adX<112&&adY<70)this.hurt(foe.damage,foe.x);
-          foe.setVelocityX(Math.sign(dx||1)*140);
-          foe.ai='recover';foe.recoverUntil=time+(foe.boss?480:620);
+          if(foe.style==='ranged')this.fireProjectile(foe);
+          else{
+            const reach=foe.style==='heavy'?150:112,vertical=foe.style==='heavy'?88:70;
+            if(adX<reach&&adY<vertical)this.hurt(foe.damage*(foe.style==='heavy'?1.12:1),foe.x);
+            foe.setVelocityX(Math.sign(dx||1)*(foe.style==='rush'?220:140));
+          }
+          foe.ai='recover';foe.recoverUntil=time+(foe.style==='heavy'?820:foe.boss?520:620);
         }
         return true;
       }
@@ -346,13 +354,15 @@ export class GameScene extends Phaser.Scene{
         return true;
       }
 
+      if(foe.boss&&foe.phase>=2&&time>=foe.nextSpecial&&foe.ai==='approach'){this.bossSpecial(foe);return true}
       const desiredX=this.player.x+foe.slotX,desiredY=Phaser.Math.Clamp(this.player.y+foe.slotY,FLOOR_TOP+50,FLOOR_BOTTOM-20);
       const sx=desiredX-foe.x,sy=desiredY-foe.y;
-      const close=adX<105&&adY<62;
-      if(close&&time>=foe.nextAttack){
-        foe.ai='telegraph';foe.attackAt=time+(foe.boss?300:390);
+      const close=adX<105&&adY<62,ranged=foe.style==='ranged'&&adX<430&&adX>130&&adY<88;
+      if((close||ranged)&&time>=foe.nextAttack){
+        const windup=foe.style==='heavy'?540:foe.style==='rush'?280:foe.style==='ranged'?420:370;
+        foe.ai='telegraph';foe.attackAt=time+windup;
         foe.telegraph?.setVisible(true).setPosition(foe.x,foe.y+56).setScale(.9).setAlpha(.2);
-        foe.setTint(foe.boss?0xff4d87:0xffcf4d);
+        foe.setTint(foe.boss?0xff4d87:foe.style==='ranged'?0x19ead8:0xffcf4d);
         foe.setTexture(`${ENEMIES[foe.kind].sprite}-3`);
         return true;
       }
@@ -368,12 +378,31 @@ export class GameScene extends Phaser.Scene{
   hitFoe(foe:Foe,damage:number,knock:number){
     if(foe.dead)return;
     foe.hp-=damage;foe.ai='stunned';foe.stunnedUntil=this.time.now+(foe.boss?110:Math.min(330,160+damage*34));foe.nextAttack=foe.stunnedUntil+350;
+    if(foe.boss&&foe.phase===1&&foe.hp<=foe.maxHp*.5){foe.phase=2;foe.speed*=1.18;foe.damage*=1.12;foe.nextSpecial=this.time.now+700;this.game.events.emit('debauchery',{name:`${ENEMIES[foe.kind].name} • PHASE TWO`});this.cameras.main.flash(120,255,40,90)}
     foe.setVelocity(knock,Phaser.Math.Between(-35,35)).setTintFill(0xffffff);
     this.time.delayedCall(60,()=>foe.active&&foe.clearTint());
     if(foe.bar)foe.bar.setScale(Math.max(0,foe.hp/foe.maxHp),1);
     this.impact(foe.x,foe.y-35);this.audio.hit(damage>=2);
     if(foe.boss)this.emitHud();
     if(foe.hp<=0)this.defeat(foe);
+  }
+
+  fireProjectile(foe:Foe){
+    const dx=this.player.x-foe.x,dy=this.player.y-foe.y,len=Math.hypot(dx,dy)||1;
+    const shot=this.physics.add.image(foe.x,foe.y-34,'prop2-2').setScale(.13).setDepth(980);
+    shot.setVelocity(dx/len*390,dy/len*390);shot.setAngularVelocity(420);shot.setData('damage',foe.damage*.78);this.projectiles.add(shot);
+    this.time.delayedCall(1700,()=>shot.active&&shot.destroy());
+  }
+
+  projectileHit(shot:Phaser.Physics.Arcade.Image){
+    if(!shot.active)return;const damage=Number(shot.getData('damage')||8);shot.destroy();this.hurt(damage,this.player.x-this.facing*20);
+  }
+
+  bossSpecial(foe:Foe){
+    foe.nextSpecial=this.time.now+3200;foe.ai='telegraph';foe.attackAt=this.time.now+540;foe.setTint(0xff315e);
+    const ring=this.add.ellipse(foe.x,foe.y+55,90,32,0xff315e,.08).setStrokeStyle(5,0xff315e,.9).setDepth(950);
+    this.tweens.add({targets:ring,scaleX:4,scaleY:2.8,alpha:0,duration:540,ease:'Quad.easeOut',onComplete:()=>ring.destroy()});
+    this.time.delayedCall(540,()=>{if(!foe.active||foe.dead)return;const dx=Math.abs(this.player.x-foe.x),dy=Math.abs(this.player.y-foe.y);if(dx<205&&dy<105)this.hurt(foe.damage*1.15,foe.x);this.cameras.main.shake(110,.008)});
   }
 
   contact(foe:Foe){
@@ -397,7 +426,7 @@ export class GameScene extends Phaser.Scene{
     const row=Number(spec.sprite.replace(/\D/g,'')),prefix=spec.sprite.startsWith('woman')?'woman':'man';
     const hp=Math.ceil(spec.hp*(boss?3.2:1)*diff.hp),scale=spec.scale*(boss?1.12:1);
     const foe=this.foes.create(x??this.player.x+500,y??520,`${prefix}${row}-1`) as Foe;
-    Object.assign(foe,{kind,hp,maxHp:hp,damage:spec.damage*(boss?1.12:1)*diff.damage,worth:spec.worth*(boss?4:1),speed:Phaser.Math.Clamp(spec.speed+25,105,155),boss,dead:false,ai:'approach' as EnemyState,nextAttack:this.time.now+900+slot*220,attackAt:0,recoverUntil:0,stunnedUntil:0,slotX:(slot%2===0?1:-1)*(80+Math.floor(slot/2)*42),slotY:(slot%3-1)*42});
+    Object.assign(foe,{kind,hp,maxHp:hp,damage:spec.damage*(boss?1.12:1)*diff.damage,worth:spec.worth*(boss?4:1),speed:Phaser.Math.Clamp(spec.speed+25,105,155),style:spec.style,boss,dead:false,phase:1,nextSpecial:this.time.now+2800,ai:'approach' as EnemyState,nextAttack:this.time.now+900+slot*220,attackAt:0,recoverUntil:0,stunnedUntil:0,slotX:(slot%2===0?1:-1)*(80+Math.floor(slot/2)*42),slotY:(slot%3-1)*42});
     foe.setScale(scale).setCollideWorldBounds(true).setDepth(Math.round(foe.y));
     this.configureBody(foe,58,88);
     foe.shadow=this.add.ellipse(foe.x,foe.y+62,82*scale,18,0x000000,.42).setDepth(1);
