@@ -37,6 +37,11 @@ func reset_story() -> void:
 func has_save() -> bool:
 	return FileAccess.file_exists(SAVE_PATH)
 
+func clear_save() -> void:
+	var absolute := ProjectSettings.globalize_path(SAVE_PATH)
+	if FileAccess.file_exists(SAVE_PATH):
+		DirAccess.remove_absolute(absolute)
+
 func save() -> void:
 	var payload := {
 		"chapter_index": chapter_index,
