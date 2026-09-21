@@ -4,6 +4,7 @@ const PlayerScript = preload("res://scripts/Player.gd")
 const EnemyScript = preload("res://scripts/Enemy.gd")
 const ProjectileScript = preload("res://scripts/Projectile.gd")
 const PortraitScript = preload("res://scripts/Portrait.gd")
+const BreakableScript = preload("res://scripts/Breakable.gd")
 
 enum Mode { TITLE, MAP, PLAYING, CUTSCENE, UPGRADE, ENDING }
 
@@ -16,6 +17,7 @@ var route_threat := 0
 var player: CharacterBody2D
 var camera: Camera2D
 var enemies: Array[Node] = []
+var breakables: Array[Node] = []
 var encounter_index := 0
 var encounter_active := false
 var arena_left := 0.0
@@ -309,6 +311,7 @@ func start_chapter(index: int) -> void:
 	arena_right = ChapterData.WORLD_WIDTH
 	chapter_start_score = GameState.score
 	chapter_start_hp = player.hp
+	_spawn_breakables()
 	queue_redraw()
 	_update_hud()
 	_toast("%s • %s" % [chapter.act,chapter.district])
@@ -318,6 +321,10 @@ func _clear_world() -> void:
 		if is_instance_valid(enemy):
 			enemy.queue_free()
 	enemies.clear()
+	for prop in breakables:
+		if is_instance_valid(prop):
+			prop.queue_free()
+	breakables.clear()
 	for child in get_children():
 		if child == player or child.get_script() == ProjectileScript:
 			child.queue_free()
@@ -354,6 +361,42 @@ func _start_encounter(encounter: Dictionary) -> void:
 		enemy.projectile_requested.connect(_spawn_projectile)
 		enemies.append(enemy)
 
+func _spawn_breakables() -> void:
+	var kinds: Array[String] = []
+	match String(chapter.id):
+		"pink_pigeon":
+			kinds = ["bottles","table","speaker","bottles"]
+		"black_lantern":
+			kinds = ["table","bottles","speaker","light"]
+		"glasshouse":
+			kinds = ["bottles","table","light","speaker"]
+		"casino":
+			kinds = ["chips","table","chips","bottles"]
+		"warehouse_44":
+			kinds = ["speaker","light","speaker","light"]
+		"kebab_judgment":
+			kinds = ["kebab","table","kebab","speaker"]
+		_:
+			kinds = ["table","table","table","table"]
+	var xs := [1450.0,3150.0,4950.0,6900.0]
+	for i in range(kinds.size()):
+		var prop: Node = BreakableScript.new()
+		prop.position = Vector2(xs[i],560.0+float(i%2)*28.0)
+		add_child(prop)
+		prop.setup(kinds[i],Color(chapter.accent),2.0+float(i%2),20+i*8,4.0+float(i))
+		prop.broken.connect(_on_prop_broken)
+		breakables.append(prop)
+
+func _on_prop_broken(_prop: Node, cash_reward: int, high_reward: float) -> void:
+	if is_instance_valid(player):
+		player.cash += cash_reward
+		player.high = min(100.0,player.high+high_reward)
+		player.sync_to_state()
+	GameState.score += cash_reward*6
+	GameState.save()
+	_toast("SMASHED • +$%d" % cash_reward)
+	_update_hud()
+
 func _enemy_name(style: String, index: int) -> String:
 	var groups := {
 		"rush":["CLUB RAT","RUNNER","CHAOS MERCHANT"],
@@ -364,6 +407,8 @@ func _enemy_name(style: String, index: int) -> String:
 	return arr[index%arr.size()]
 
 func _check_encounter_clear() -> void:
+	if not encounter_active:
+		return
 	var alive := 0
 	for enemy in enemies:
 		if is_instance_valid(enemy) and not enemy.dead:
@@ -384,6 +429,13 @@ func _on_player_attack(origin: Vector2, facing: float, range_x: float, range_y: 
 		var d: Vector2 = enemy.global_position-origin
 		if sign(d.x if d.x != 0 else facing)==sign(facing) and abs(d.x)<=range_x and abs(d.y)<=range_y:
 			enemy.receive_hit(damage,knockback,origin.x)
+			hits += 1
+	for prop in breakables:
+		if not is_instance_valid(prop) or prop.broken_state:
+			continue
+		var pd: Vector2 = prop.global_position-origin
+		if sign(pd.x if pd.x != 0 else facing)==sign(facing) and abs(pd.x)<=range_x+45.0 and abs(pd.y)<=range_y+35.0:
+			prop.receive_hit(damage,knockback,origin.x)
 			hits += 1
 	if hits > 0:
 		combo_count += hits
