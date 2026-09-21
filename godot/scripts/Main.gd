@@ -1,8 +1,9 @@
+extends Node2D
+
 const PlayerScript = preload("res://scripts/Player.gd")
 const EnemyScript = preload("res://scripts/Enemy.gd")
 const ProjectileScript = preload("res://scripts/Projectile.gd")
 const PortraitScript = preload("res://scripts/Portrait.gd")
-extends Node2D
 
 enum Mode { TITLE, MAP, PLAYING, CUTSCENE, UPGRADE, ENDING }
 
