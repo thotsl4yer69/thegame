@@ -3,13 +3,20 @@ extends Control
 
 var character := "ROXI REDLINE"
 var tone := "pink"
+var salem_texture: Texture2D
 
 func setup(name: String, palette: String) -> void:
 	character = name
 	tone = palette
+	if character == "SALEM" and ResourceLoader.exists("res://assets/salem_portrait.png"):
+		salem_texture = load("res://assets/salem_portrait.png") as Texture2D
 	queue_redraw()
 
 func _draw() -> void:
+	if character == "SALEM" and salem_texture:
+		draw_texture_rect(salem_texture,Rect2(0,0,size.x,size.y),false)
+		draw_rect(Rect2(0,0,size.x,size.y),Color(0.04,0.01,0.05,0.18))
+		return
 	var w := size.x
 	var h := size.y
 	var accent := _accent()
