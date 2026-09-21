@@ -127,7 +127,7 @@ func _update_attack(now: int) -> void:
 		if attack_kind == "heavy" and high >= 100.0:
 			damage *= 1.75
 			high = 45.0
-		attack_window.emit(global_position, facing, float(data.rx) + 34.0, float(data.ry) + 16.0, damage, float(data.knock) * 1.25)
+			attack_window.emit(global_position, facing, float(data.rx) + 34.0, float(data.ry) + 16.0, damage, float(data.knock) * 1.25)
 		else:
 			attack_window.emit(global_position, facing, float(data.rx), float(data.ry), damage, float(data.knock))
 		stats_changed.emit()
