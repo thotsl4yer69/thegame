@@ -1,10 +1,10 @@
 class_name EnemyFighter
 extends CharacterBody2D
 
-signal died(enemy: EnemyFighter)
+signal died(enemy: Node)
 signal projectile_requested(origin: Vector2, target: Vector2, damage: float)
 
-var target: PlayerFighter
+var target: CharacterBody2D
 var archetype := "rush"
 var display_name := "PROBLEM"
 var accent := Color("#ffcc33")
@@ -23,7 +23,7 @@ var special_at := 0
 var slot_offset := Vector2.ZERO
 var dead := false
 
-func setup(player: PlayerFighter, style: String, name: String, color: Color, is_boss := false, slot := 0) -> void:
+func setup(player: CharacterBody2D, style: String, name: String, color: Color, is_boss := false, slot := 0) -> void:
 	target = player
 	archetype = style
 	display_name = name
@@ -106,7 +106,7 @@ func _resolve_attack(delta_to_player: Vector2) -> void:
 		var range_x: float = 155.0 if archetype=="heavy" else 118.0
 		var range_y: float = 92.0 if archetype=="heavy" else 72.0
 		if abs(delta_to_player.x) <= range_x and abs(delta_to_player.y) <= range_y:
-			target.take_damage(damage * (1.12 if archetype=="heavy" else 1.0), global_position.x)
+			target.call("take_damage",damage * (1.12 if archetype=="heavy" else 1.0), global_position.x)
 		velocity.x = sign(delta_to_player.x) * (220.0 if archetype=="rush" else 145.0)
 	state = "recover"
 	cooldown_until = now + (860 if archetype=="heavy" else 620)
