@@ -59,9 +59,9 @@ func _physics_process(_delta: float) -> void:
 	elif state == "stunned":
 		state = "approach"
 
-	var delta_to_player := target.global_position - global_position
-	var ax := abs(delta_to_player.x)
-	var ay := abs(delta_to_player.y)
+	var delta_to_player: Vector2 = target.global_position - global_position
+	var ax: float = absf(delta_to_player.x)
+	var ay: float = absf(delta_to_player.y)
 
 	if state == "telegraph":
 		velocity = Vector2.ZERO
@@ -83,17 +83,17 @@ func _physics_process(_delta: float) -> void:
 		queue_redraw()
 		return
 
-	var desired := target.global_position + slot_offset
-	var to_slot := desired - global_position
-	var ranged_ready := archetype == "ranged" and ax < 430.0 and ax > 140.0 and ay < 95.0
-	var melee_ready := ax < (145.0 if archetype=="heavy" else 108.0) and ay < (92.0 if archetype=="heavy" else 70.0)
+	var desired: Vector2 = target.global_position + slot_offset
+	var to_slot: Vector2 = desired - global_position
+	var ranged_ready: bool = archetype == "ranged" and ax < 430.0 and ax > 140.0 and ay < 95.0
+	var melee_ready: bool = ax < (145.0 if archetype=="heavy" else 108.0) and ay < (92.0 if archetype=="heavy" else 70.0)
 
 	if now >= cooldown_until and (ranged_ready or melee_ready):
 		state = "telegraph"
 		attack_at = now + (560 if archetype=="heavy" else 430 if archetype=="ranged" else 290)
 		velocity = Vector2.ZERO
 	else:
-		var dir := to_slot.normalized()
+		var dir: Vector2 = to_slot.normalized()
 		velocity = Vector2(dir.x * move_speed, dir.y * move_speed * 0.72)
 		move_and_slide()
 	queue_redraw()
@@ -103,8 +103,8 @@ func _resolve_attack(delta_to_player: Vector2) -> void:
 	if archetype == "ranged":
 		projectile_requested.emit(global_position + Vector2(0,-20), target.global_position, damage * 0.8)
 	else:
-		var range_x := 155.0 if archetype=="heavy" else 118.0
-		var range_y := 92.0 if archetype=="heavy" else 72.0
+		var range_x: float = 155.0 if archetype=="heavy" else 118.0
+		var range_y: float = 92.0 if archetype=="heavy" else 72.0
 		if abs(delta_to_player.x) <= range_x and abs(delta_to_player.y) <= range_y:
 			target.take_damage(damage * (1.12 if archetype=="heavy" else 1.0), global_position.x)
 		velocity.x = sign(delta_to_player.x) * (220.0 if archetype=="rush" else 145.0)
@@ -145,7 +145,7 @@ func _draw() -> void:
 	draw_ellipse(Vector2(0,55),Vector2(40,10),Color(0,0,0,0.36))
 	var dark := Color("#151019")
 	var skin := Color("#c98f77")
-	var scale_boost := 1.15 if boss else 1.0
+	var scale_boost: float = 1.15 if boss else 1.0
 
 	draw_polygon(PackedVector2Array([
 		Vector2(-24,-18)*scale_boost,Vector2(24,-18)*scale_boost,
@@ -166,13 +166,13 @@ func _draw() -> void:
 		draw_line(Vector2(-24,-10),Vector2(24,28),Color("#ff315e"),4.0)
 
 	if state=="telegraph":
-		var remain := max(0,attack_at-Time.get_ticks_msec())
-		var total := 560.0 if archetype=="heavy" else 430.0 if archetype=="ranged" else 290.0
-		var p := 1.0 - float(remain)/total
+		var remain: int = maxi(0,attack_at-Time.get_ticks_msec())
+		var total: float = 560.0 if archetype=="heavy" else 430.0 if archetype=="ranged" else 290.0
+		var p: float = 1.0 - float(remain)/total
 		draw_arc(Vector2(0,54),52.0+p*34.0,0,TAU,40,Color(accent,0.75),5.0)
 
 	if boss:
-		var ratio := max(0.0,hp/max_hp)
+		var ratio: float = maxf(0.0,hp/max_hp)
 		draw_rect(Rect2(-48,-96,96,8),Color("#160713"))
 		draw_rect(Rect2(-46,-94,92*ratio,4),accent)
 
