@@ -25,8 +25,8 @@ func _physics_process(delta: float) -> void:
 		queue_free()
 
 func _on_body_entered(body: Node) -> void:
-	if body is PlayerFighter:
-		body.take_damage(damage,global_position.x)
+	if body.has_method("take_damage"):
+		body.call("take_damage",damage,global_position.x)
 		queue_free()
 
 func _draw() -> void:
