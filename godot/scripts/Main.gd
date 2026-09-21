@@ -408,8 +408,8 @@ func _complete_chapter() -> void:
 	player.sync_to_state()
 	GameState.save()
 	pending_chapter = chapter_index
-	var damage_taken := max(0.0,chapter_start_hp-player.hp)
-	var performance := max(500,GameState.score-chapter_start_score)
+	var damage_taken: float = maxf(0.0,chapter_start_hp-player.hp)
+	var performance: int = maxi(500,GameState.score-chapter_start_score)
 	GameState.score += int(1000.0-damage_taken*8.0)
 	show_cutscene(pending_chapter,performance,damage_taken)
 
