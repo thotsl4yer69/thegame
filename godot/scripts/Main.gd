@@ -1,3 +1,7 @@
+const PlayerScript = preload("res://scripts/Player.gd")
+const EnemyScript = preload("res://scripts/Enemy.gd")
+const ProjectileScript = preload("res://scripts/Projectile.gd")
+const PortraitScript = preload("res://scripts/Portrait.gd")
 extends Node2D
 
 enum Mode { TITLE, MAP, PLAYING, CUTSCENE, UPGRADE, ENDING }
@@ -8,9 +12,9 @@ var chapter: Dictionary = {}
 var selected_route: Dictionary = {}
 var route_threat := 0
 
-var player: PlayerFighter
+var player: CharacterBody2D
 var camera: Camera2D
-var enemies: Array[EnemyFighter] = []
+var enemies: Array[Node] = []
 var encounter_index := 0
 var encounter_active := false
 var arena_left := 0.0
@@ -171,7 +175,7 @@ func _build_title() -> void:
 	_button(title_root,"DOSSIERS",Vector2(420,445),Vector2(180,62),func(): _show_dossiers())
 
 	# New title-side graphic language: Melbourne skyline / neon / tram wire.
-	var side := StoryPortrait.new()
+	var side: Control = PortraitScript.new()
 	side.position = Vector2(730,70)
 	side.size = Vector2(500,610)
 	side.setup("SALEM","violet")
@@ -217,7 +221,7 @@ func _show_dossiers() -> void:
 	for i in range(names.size()):
 		var card_x := 55.0 + float(i)*300.0
 		_panel(ending_root,Color("#130b16"),Rect2(card_x,145,265,410))
-		var portrait := StoryPortrait.new()
+		var portrait: Control = PortraitScript.new()
 		portrait.position = Vector2(card_x+20,160)
 		portrait.size = Vector2(225,260)
 		portrait.setup(names[i][0],names[i][1])
@@ -279,7 +283,7 @@ func start_chapter(index: int) -> void:
 	_show_only(hud_root)
 	touch_root.visible = true
 
-	player = PlayerFighter.new()
+	player = PlayerScript.new()
 	player.position = Vector2(240,535)
 	add_child(player)
 	player.sync_from_state()
@@ -314,7 +318,7 @@ func _clear_world() -> void:
 			enemy.queue_free()
 	enemies.clear()
 	for child in get_children():
-		if child is PlayerFighter or child is ClubProjectile:
+		if child == player or child.get_script() == ProjectileScript:
 			child.queue_free()
 	player = null
 	camera = null
@@ -340,7 +344,7 @@ func _start_encounter(encounter: Dictionary) -> void:
 		var is_boss := String(encounter.style)=="boss" and i==count-1
 		if is_boss:
 			style = String(chapter.boss_style)
-		var enemy := EnemyFighter.new()
+		var enemy: Node = EnemyScript.new()
 		enemy.position = Vector2(float(encounter.x)+250.0+float(i)*92.0,470.0+float(i%3)*55.0)
 		add_child(enemy)
 		var enemy_name := String(chapter.boss) if is_boss else _enemy_name(style,i)
@@ -376,7 +380,7 @@ func _on_player_attack(origin: Vector2, facing: float, range_x: float, range_y: 
 	for enemy in enemies:
 		if not is_instance_valid(enemy) or enemy.dead:
 			continue
-		var d := enemy.global_position-origin
+		var d: Vector2 = enemy.global_position-origin
 		if sign(d.x if d.x != 0 else facing)==sign(facing) and abs(d.x)<=range_x and abs(d.y)<=range_y:
 			enemy.receive_hit(damage,knockback,origin.x)
 			hits += 1
@@ -388,14 +392,14 @@ func _on_player_attack(origin: Vector2, facing: float, range_x: float, range_y: 
 		player.reward_hit(5.0*hits,2*hits)
 		GameState.score += int(damage*100.0)*hits
 
-func _on_enemy_died(enemy: EnemyFighter) -> void:
+func _on_enemy_died(enemy: Node) -> void:
 	GameState.score += 300 if enemy.boss else 110
 	GameState.cash += 30 if enemy.boss else 8
 	GameState.save()
 	_update_hud()
 
 func _spawn_projectile(origin: Vector2, target: Vector2, damage: float) -> void:
-	var shot := ClubProjectile.new()
+	var shot: Node = ProjectileScript.new()
 	add_child(shot)
 	shot.setup(origin,target,damage)
 
@@ -422,7 +426,7 @@ func show_cutscene(index: int, performance: int, damage_taken: float) -> void:
 	_panel(cutscene_root,Color("#070309"),Rect2(0,0,1280,720))
 	_panel(cutscene_root,Color(_tone_color(tone),0.13),Rect2(0,0,1280,720))
 
-	var portrait := StoryPortrait.new()
+	var portrait: Control = PortraitScript.new()
 	portrait.position = Vector2(650,20)
 	portrait.size = Vector2(600,700)
 	portrait.setup(String(scene.character),tone)
@@ -444,7 +448,7 @@ func _resolve_story_choice(choice: Dictionary, index: int, performance: int, dam
 	_apply_story_effects(choice.effects)
 	_clear_control(cutscene_root)
 	_panel(cutscene_root,Color("#08050df2"),Rect2(0,0,1280,720))
-	var portrait := StoryPortrait.new()
+	var portrait: Control = PortraitScript.new()
 	portrait.position = Vector2(680,20)
 	portrait.size = Vector2(560,700)
 	var scene: Dictionary = StoryData.END_SCENES[index]
