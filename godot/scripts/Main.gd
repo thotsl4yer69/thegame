@@ -62,7 +62,7 @@ func _process(delta: float) -> void:
 	if mode == Mode.PLAYING and is_instance_valid(player):
 		if encounter_active:
 			player.position.x = clamp(player.position.x, arena_left, arena_right)
-		_check_encounter_clear()
+			_check_encounter_clear()
 		else:
 			_check_encounter_trigger()
 		if encounter_index >= chapter.encounters.size() and player.position.x > ChapterData.WORLD_WIDTH - 300.0:
