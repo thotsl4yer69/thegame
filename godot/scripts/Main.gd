@@ -544,6 +544,7 @@ func _choose_upgrade(upgrade: Dictionary, index: int, performance: int, damage_t
 	show_map(index+1)
 
 func show_ending() -> void:
+	GameState.clear_save()
 	mode = Mode.ENDING
 	_show_only(ending_root)
 	_clear_control(ending_root)
