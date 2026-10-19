@@ -275,7 +275,13 @@ document.querySelectorAll<HTMLButtonElement>('#touch [data-action]').forEach(but
   const action=button.dataset.action!;
   button.addEventListener('pointerdown',event=>{
     event.preventDefault();
-    button.setPointerCapture?.(event.pointerId);
+    // Some synthetic/mobile pointer sequences have no active pointer at this
+    // exact tick; the action must still fire instead of crashing the game.
+    // Real active pointers keep capture for release outside the button.
+    try { button.setPointerCapture?.(event.pointerId); }
+    catch (error) {
+      if (!(error instanceof DOMException && error.name === 'NotFoundError')) throw error;
+    }
     vibrate(action==='hit'||action==='heavy'?14:8);
     game.events.emit('touch',action,true);
   });
