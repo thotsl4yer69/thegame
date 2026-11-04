@@ -1,4 +1,6 @@
 # THOTSL4YER69 — JUST THE TIP
+> A THOTSL4YER69 INDUSTRIES original. [Visit TS69 Industries](https://thotslayer69-industries.vercel.app/) · [Shop AFTER HOURS](https://thotsl4yer69-shop.vercel.app/)
+
 
 An adults-only, four-act browser brawler about one catastrophically cooked night. This is an original autobiographical parody: vulgar, violent, sexy, stupid and entirely fictional.
 
