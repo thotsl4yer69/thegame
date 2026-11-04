@@ -967,3 +967,26 @@ body.campaign-active #marquee{opacity:0}
   .story-card .campaign-stats{justify-content:flex-start;width:100%}.story-card .campaign-stats span{min-width:70px}
   .side-story>div{padding:15px}.side-story h2{font-size:38px}.side-story p{font-size:12px}
 }
+
+
+/* Mobile portrait is deliberately gated: the game is a 16:9 brawler and
+   squeezing active controls into portrait makes it unusable. */
+#rotate-screen { display:none; }
+@media (orientation:portrait) and (pointer:coarse) and (max-width:800px) {
+  #rotate-screen {
+    display:grid;place-items:center;position:fixed;inset:0;
+    z-index:1000;overflow-y:auto;padding:28px 22px;
+    background:radial-gradient(circle at 75% 15%,#9b0a5370,transparent 45%),#0b040c;
+    color:#fff;text-align:center;overscroll-behavior:contain;
+  }
+  #rotate-screen .rotate-content { width:min(100%,450px);margin:auto; }
+  #rotate-screen .rotate-icon { display:block;font:90px/1 Arial,sans-serif;color:#19ead8;margin:0 auto 12px; }
+  #rotate-screen .rotate-kicker { font:12px 'Black Ops One',Impact,sans-serif;letter-spacing:1px;color:#ffd229; }
+  #rotate-screen h2 { font:clamp(35px,11vw,62px)/.96 'Black Ops One',Impact,sans-serif;color:#fff;
+                       margin:15px 0;text-shadow:3px 4px 0 #ff269c; }
+  #rotate-screen p { font:15px/1.5 Oswald,Arial,sans-serif;color:#f2e6ed; }
+  #rotate-screen button { width:100%;margin:20px 0 12px;min-height:55px;
+                          background:#ffd229;border:3px solid #fff;color:#17070d;
+                          font:17px 'Black Ops One',Impact,sans-serif;cursor:pointer; }
+  #rotate-screen small { display:block;font:11px/1.4 Oswald,Arial,sans-serif;color:#e4c6d4; }
+}

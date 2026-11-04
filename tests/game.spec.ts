@@ -149,3 +149,24 @@ test('THOT CITY overworld exposes persistent campaign stats and route risk', asy
   await expect(page.locator('#hud')).not.toHaveClass(/gone/);
   await expect(page.locator('#wave')).toContainText('/4');
 });
+
+
+test('portrait phone shows rotation guidance and unlocks gameplay on landscape', async ({ browser }) => {
+  const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+  const page=await context.newPage();
+  const runtimeErrors:string[]=[];
+  page.on('pageerror',e=>runtimeErrors.push(e.message));
+  await page.goto('/', {waitUntil:'networkidle'});
+  await expect(page.locator('#rotate-screen')).toBeVisible();
+  await expect(page.locator('#enable-landscape')).toBeVisible();
+  await page.setViewportSize({width:844,height:390});
+  await expect(page.locator('#rotate-screen')).toBeHidden();
+  await expect(page.locator('#start')).toBeVisible();
+  await page.locator('#start').click();
+  await expect(page.locator('#worldmap')).not.toHaveClass(/gone/);
+  await page.locator('[data-route="0"]').click();
+  await expect(page.locator('#touch')).not.toHaveClass(/gone/);
+  await expect(page.locator('canvas')).toBeVisible();
+  expect(runtimeErrors).toEqual([]);
+  await context.close();
+});

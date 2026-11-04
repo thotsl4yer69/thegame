@@ -133,6 +133,26 @@ q('#cast').onclick=showCast;
 q('#cinema').onclick=showCinema;
 q('#mute').onclick=()=>{q('#mute').textContent=audio.toggle()?'×':'♪'};
 
+// Fullscreen landscape is optional; the CSS rotation notice remains the
+// fallback when Android/iOS does not allow an orientation lock in a browser tab.
+q<HTMLButtonElement>('#enable-landscape').onclick=async()=>{
+  const button=q<HTMLButtonElement>('#enable-landscape');
+  try{
+    if(!document.fullscreenElement && document.documentElement.requestFullscreen){
+      await document.documentElement.requestFullscreen();
+    }
+    const orientation=screen.orientation as ScreenOrientation & {lock?: (mode:'landscape')=>Promise<void>};
+    if(typeof orientation?.lock==='function'){
+      await orientation.lock('landscape');
+    }else{
+      button.textContent='ROTATE YOUR PHONE SIDEWAYS';
+    }
+  }catch{
+    button.textContent='ROTATE YOUR PHONE SIDEWAYS';
+  }
+};
+
+
 game.events.on('toast',({text,duration}:{text:string;duration:number})=>{
   toast.innerText=text;
   clearTimeout(toastTimer);
